@@ -1,0 +1,31 @@
+#!/usr/bin/php
+<?php
+$db = new SQLite3(__DIR__.'/hacklab.sqlite');
+$stmt = $db->prepare('INSERT INTO visitor (ip, mac) VALUES (?,?)');
+
+// Canonicalizes MAC address to upper case hex string without commas
+function macstr($in) {
+    $out = '';
+    foreach (explode(':', $in) as $octet) {
+        $out .= (strlen($octet) === 1 ? '0' : '') . strtoupper($octet);
+    }
+    return $out;
+}
+
+switch (getenv('SSH_ORIGINAL_COMMAND')) {
+case 'arp':
+    while ($line = fgets(STDIN)) {
+        $n = preg_match('/^Unicast reply from ([^ ]*) \[([0-9a-f:]*)\]/', $line, $m);
+        if ($n !== 1) continue;
+        $stmt->reset();
+        $stmt->bindValue(1, $m[1]);
+        $stmt->bindValue(2, macstr($m[2]));
+        $stmt->execute();
+    }
+    break;
+default:
+    print("Unsupported\n");
+    break;
+}
+
+$db->close();
