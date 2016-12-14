@@ -1,0 +1,11 @@
+#!/bin/bash -eu
+#
+# Deploy to remote server
+
+if test $# -lt 1; then
+    echo "Usage: $0 target:directory [RSYNC_ARGS]" >&2
+    exit 1
+fi
+
+cd "`dirname $0`"
+rsync -avz '--exclude=.git*' --exclude sync --exclude '*~' --exclude-from=.gitignore . "$@"
