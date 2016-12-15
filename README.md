@@ -69,7 +69,7 @@ TODO systemd service file
 
 ## Database
 
-Schema can be found at [schema.sql]. Create initial database with
+Schema can be found at [schema.sql](schema.sql). Create initial database with
 `./init_db`. See some human readable data from SQLite3 console by
 running:
 
