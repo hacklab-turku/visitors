@@ -28,3 +28,26 @@ function db_execute(&$stmt, $values = [], $error = "Database error") {
     if ($error !== NULL && $ret === FALSE) err($error);
     return $ret;
 }
+
+// Wait data from a stream for a given number of seconds (floats
+// accepted). If time elapses, return FALSE, otherwise TRUE.
+function is_data_available($fd, $secs) {
+    // Prepare fd lists
+    $fd_read = [$fd];
+    $fd_write = NULL;
+    $fd_ex = NULL;
+
+    // Prepare time
+    if ($secs === NULL) {
+        $tv_sec = NULL;
+        $tv_usec = NULL;
+    } else {
+        $tv_sec = floor($secs);
+        $tv_usec = floor(1e6*($secs - $tv_sec));
+    }
+
+    // Go
+    $out = stream_select($fd_read, $fd_write, $fd_ex, $tv_sec, $tv_usec);
+    if ($out < 0) err("Unable to select()");
+    return $out !== 0;
+}
