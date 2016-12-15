@@ -39,9 +39,13 @@ following option:
 	Storage=persistent
 
 Shorten lease time in `/etc/dnsmasq.conf`. In *dhcp-range* put `5m`
-after the range definition.
+after the range definition. For example:
 
 	dhcp-range=10.0.0.100,10.0.0.254,5m
+
+In the same file, enable logging (a must for this to work):
+
+	log-dhcp
 
 Reload services (as root):
 
@@ -74,6 +78,6 @@ Schema can be found at [schema.sql](schema.sql). Create initial database with
 running:
 
 ```sql
-SELECT mac, datetime(enter, 'unixepoch'), datetime(leave, 'unixepoch'), hostname FROM visit;
+SELECT mac, datetime(enter, 'unixepoch', 'localtime'), datetime(leave, 'unixepoch', 'localtime'), hostname FROM visit;
 ```
 
