@@ -17,6 +17,9 @@ $cursor = $db->querySingle("SELECT value FROM state WHERE key='cursor'");
 $update_cursor = $db->prepare("UPDATE state SET value=? WHERE key='cursor'");
 $add_visit = $db->prepare("INSERT INTO visit (mac, enter, leave, ip, hostname) VALUES (:mac,:now,:now,:ip,:host)");
 $update_visit = $db->prepare("UPDATE visit SET leave=:now WHERE leave>:now-$dhcp_lease_secs AND mac=:mac");
+$last_leave_rowid = $db->querySingle("SELECT value FROM state WHERE key='last_leave_rowid'");
+$update_last_leave_rowid = $db->prepare("UPDATE state SET value=? WHERE key='last_leave_rowid'");
+$potential_leave = $db->prepare("SELECT rowid, mac, leave FROM visit ORDER BY leave DESC limit 1;");
 
 // 0MQ
 /*$zmq_context = new ZMQContext();
@@ -34,6 +37,28 @@ $pipe = popen("journalctl -n all -u dnsmasq -o export $after $follow_arg", "r");
 if (!$follow) $db->exec('BEGIN');
 
 while (true) {
+    // Calculate next potential leave time and wait until that to
+    // decide if it the last person has left the premises.
+    $leaver = db_execute($potential_leave)->fetchArray(SQLITE3_ASSOC);
+
+    // Deciding how long to wait
+    if ($leaver === FALSE || $leaver['rowid'] === $last_leave_rowid) {
+        // Already reported or no data yet. Wait infinitely.
+        $delay = NULL;
+    } else {
+        // Calculate waiting timeout. Always wait for new data for at
+        // least a second (helps if processing historical data)
+        $delay = max(1, $leaver['leave'] + $dhcp_lease_secs - gettimeofday(true));
+    }
+
+    if (!is_data_available($pipe, $delay)) {
+        // No new data available. User has left.
+        $last_leave_rowid = $leaver['rowid'];
+        db_execute($update_last_leave_rowid, [$last_leave_rowid]);
+        print("User ".$leaver['mac']." has left at ".$leaver['leave']."\n");
+        continue; // Start again
+    }
+
     $vars = [];
     while (true) {
         $line = fgets($pipe);
