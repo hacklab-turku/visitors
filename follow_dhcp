@@ -61,25 +61,27 @@ while (true) {
 
     // Transaction takes place until cursor update. If the script dies
     // while processing, it doesn't skip anything.
-    if ($follow) $db->exec('BEGIN');
     if (!empty($matches)) {
-        // We have a payload. Populate all
+        // We have a payload. Populate all data and execute SQL
         $data = [
             'now' => floor($vars['__REALTIME_TIMESTAMP'] / 1000000), // seconds
             'mac' => strtoupper(str_replace(':', '', $matches[1])), // uppercase mac with no colons
             'host' => $matches[2],
         ];  
 
+        if ($follow) $db->exec('BEGIN');
+
         //Try to update visit first if possible, otherwise insert new.
         db_execute($update_visit, $data);
         if ($db->changes() === 0) {
             db_execute($add_visit, $data);
         }
-    }
 
-    // Now inserting the data and update cursor position
-    db_execute($cursor_stmt, [$vars['__CURSOR']]);
-    if ($follow) $db->exec('END');
+        // Now inserting the data and update cursor position
+        db_execute($cursor_stmt, [$vars['__CURSOR']]);
+
+        if ($follow) $db->exec('END');
+    }
 
 /*
     // After storing the data, notify. Other way around the long
