@@ -19,7 +19,7 @@ $add_visit = $db->prepare("INSERT INTO visit (mac, enter, leave, ip, hostname) V
 $update_visit = $db->prepare("UPDATE visit SET leave=:now WHERE leave>:now-$dhcp_lease_secs AND mac=:mac");
 $last_leave_rowid = $db->querySingle("SELECT value FROM state WHERE key='last_leave_rowid'");
 $update_last_leave_rowid = $db->prepare("UPDATE state SET value=? WHERE key='last_leave_rowid'");
-$potential_leave = $db->prepare("SELECT rowid, mac, leave FROM visit ORDER BY leave DESC limit 1;");
+$potential_leave = $db->prepare("SELECT v.rowid, nick, leave FROM visit v JOIN user_mac USING (mac) JOIN user USING (id) ORDER BY leave DESC, changed DESC LIMIT 1;");
 
 // 0MQ
 /*$zmq_context = new ZMQContext();
@@ -55,10 +55,11 @@ while (true) {
         // No new data available. User has left.
         $last_leave_rowid = $leaver['rowid'];
         db_execute($update_last_leave_rowid, [$last_leave_rowid]);
-        print("User ".$leaver['mac']." has left at ".$leaver['leave']."\n");
+        print("User ".$leaver['nick']." has left at ".date('c', $leaver['leave'])."\n");
         continue; // Start again
     }
 
+    // Parse journalctl entry to an associative array $vars
     $vars = [];
     while (true) {
         $line = fgets($pipe);

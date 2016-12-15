@@ -33,5 +33,6 @@ CREATE TABLE user_mac(
 );
 
 CREATE INDEX ix_user_mac_mac on user_mac (mac,changed DESC);
+CREATE INDEX ix_user_mac_id on user_mac (id);
 
 END;
