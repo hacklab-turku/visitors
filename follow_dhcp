@@ -29,14 +29,14 @@ chmod($ipc_path, 0777); // Allow access to all local users
 // Data source
 $after = $cursor === NULL ? '' : "'--after-cursor=$cursor'";
 $follow_arg = $follow ? '-f' : '';
-$flow = popen("journalctl -n all -u dnsmasq -o export $after $follow_arg", "r");
+$pipe = popen("journalctl -n all -u dnsmasq -o export $after $follow_arg", "r");
 
 if (!$follow) $db->exec('BEGIN');
 
 while (true) {
     $vars = [];
     while (true) {
-        $line = fgets($flow);
+        $line = fgets($pipe);
         if ($line === FALSE) {
             // It's over.
             break 2;
