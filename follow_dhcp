@@ -3,11 +3,20 @@
 require_once(__DIR__.'/common.php');
 $dhcp_lease_secs = 300;
 
+// Process data up to date (--oneshot) or follow log continuously (no args)
+if (count($argv) < 2) {
+    $follow = TRUE;
+} else if ($argv[1] === "--oneshot") {
+    $follow = FALSE;
+} else {
+    err("Invalid arguments");
+}
+
 // Database
 $cursor = $db->querySingle('SELECT cursor FROM cursor');
 $cursor_stmt = $db->prepare("UPDATE cursor SET cursor=?");
 $add_visit = $db->prepare("INSERT INTO visit (mac, enter, leave, hostname) VALUES (:mac,:now,:now,:host)");
-$update_visit = $db->prepare("UPDATE visit SET leave=:now WHERE enter>:now-$dhcp_lease_secs AND mac=:mac");
+$update_visit = $db->prepare("UPDATE visit SET leave=:now WHERE leave>:now-$dhcp_lease_secs AND mac=:mac");
 
 // 0MQ
 /*$zmq_context = new ZMQContext();
@@ -19,9 +28,10 @@ chmod($ipc_path, 0777); // Allow access to all local users
 
 // Data source
 $after = $cursor === NULL ? '' : "'--after-cursor=$cursor'";
-$flow = popen("journalctl -fn all -u dnsmasq -o export $after", "r");
+$follow_arg = $follow ? '-f' : '';
+$flow = popen("journalctl -n all -u dnsmasq -o export $after $follow_arg", "r");
 
-$last_print = 0;
+if (!$follow) $db->exec('BEGIN');
 
 while (true) {
     $vars = [];
@@ -51,7 +61,7 @@ while (true) {
 
     // Transaction takes place until cursor update. If the script dies
     // while processing, it doesn't skip anything.
-    $db->exec('BEGIN');
+    if ($follow) $db->exec('BEGIN');
     if (!empty($matches)) {
         // We have a payload. Populate all
         $data = [
@@ -69,14 +79,7 @@ while (true) {
 
     // Now inserting the data and update cursor position
     db_execute($cursor_stmt, [$vars['__CURSOR']]);
-    $db->exec('END');
-
-    // Just some debuging output
-    $now = gettimeofday(true);
-    if ($now>$last_print+10) {
-        print(date("c\n",$vars['__REALTIME_TIMESTAMP'] / 1000000));
-        $last_print = $now;
-    }
+    if ($follow) $db->exec('END');
 
 /*
     // After storing the data, notify. Other way around the long
@@ -88,3 +91,5 @@ while (true) {
     }
 */
 }
+
+if (!$follow) $db->exec('END');
