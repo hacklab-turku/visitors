@@ -1,8 +1,14 @@
+-- -*- mode: sql; sql-product: sqlite; -*-
+BEGIN;
+
+CREATE TABLE cursor (cursor text);
+INSERT INTO cursor DEFAULT VALUES;
+
 CREATE TABLE visit(
 	mac TEXT NOT NULL,
 	enter INTEGER NOT NULL,
 	leave INTEGER NOT NULL,
-	hostname TEXT
+	hostname TEXT NOT NULL
 );
 
 CREATE INDEX ix_visit_mac ON visit (mac,enter);
@@ -23,3 +29,5 @@ CREATE TABLE user_mac(
 );
 
 CREATE INDEX ix_user_mac_mac on user_mac (mac,changed DESC);
+
+END;

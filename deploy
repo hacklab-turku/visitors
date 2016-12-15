@@ -8,4 +8,4 @@ if test $# -lt 1; then
 fi
 
 cd "`dirname $0`"
-rsync -avz '--exclude=.git*' --exclude sync --exclude '*~' --exclude-from=.gitignore . "$@"
+rsync -avz '--exclude=.git*' --exclude deploy --exclude '*~' --exclude-from=.gitignore . "$@"
