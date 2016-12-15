@@ -73,9 +73,9 @@ TODO systemd service file
 
 ## Database
 
-Schema can be found at [schema.sql](schema.sql). Create initial database with
-`./init_db`. See some human readable data from SQLite3 console by
-running:
+Schema can be found at [schema.sql](schema.sql). Create initial
+database with `./init_db`. See some human readable data from SQLite3
+console (start with `sqlite3 db/db.sqlite`) by running:
 
 ```sql
 SELECT mac, datetime(enter, 'unixepoch', 'localtime'), datetime(leave, 'unixepoch', 'localtime'), hostname FROM visit;
