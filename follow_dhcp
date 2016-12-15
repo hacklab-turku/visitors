@@ -13,8 +13,8 @@ if (count($argv) < 2) {
 }
 
 // Database
-$cursor = $db->querySingle('SELECT cursor FROM cursor');
-$update_cursor = $db->prepare("UPDATE cursor SET cursor=?");
+$cursor = $db->querySingle("SELECT value FROM state WHERE key='cursor'");
+$update_cursor = $db->prepare("UPDATE state SET value=? WHERE key='cursor'");
 $add_visit = $db->prepare("INSERT INTO visit (mac, enter, leave, hostname) VALUES (:mac,:now,:now,:host)");
 $update_visit = $db->prepare("UPDATE visit SET leave=:now WHERE leave>:now-$dhcp_lease_secs AND mac=:mac");
 

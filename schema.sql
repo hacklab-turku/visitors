@@ -1,8 +1,11 @@
 -- -*- mode: sql; sql-product: sqlite; -*-
 BEGIN;
 
-CREATE TABLE cursor (cursor text);
-INSERT INTO cursor DEFAULT VALUES;
+CREATE TABLE state (
+	key TEXT PRIMARY KEY,
+	value TEXT
+);
+INSERT INTO state (key) VALUES ('cursor');
 
 CREATE TABLE visit(
 	mac TEXT NOT NULL,
