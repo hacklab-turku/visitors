@@ -11,6 +11,7 @@ CREATE TABLE visit(
 	mac TEXT NOT NULL,
 	enter INTEGER NOT NULL,
 	leave INTEGER NOT NULL,
+	ip TEXT NOT NULL,
 	hostname TEXT NOT NULL
 );
 

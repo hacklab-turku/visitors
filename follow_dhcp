@@ -15,7 +15,7 @@ if (count($argv) < 2) {
 // Database
 $cursor = $db->querySingle("SELECT value FROM state WHERE key='cursor'");
 $update_cursor = $db->prepare("UPDATE state SET value=? WHERE key='cursor'");
-$add_visit = $db->prepare("INSERT INTO visit (mac, enter, leave, hostname) VALUES (:mac,:now,:now,:host)");
+$add_visit = $db->prepare("INSERT INTO visit (mac, enter, leave, ip, hostname) VALUES (:mac,:now,:now,:ip,:host)");
 $update_visit = $db->prepare("UPDATE visit SET leave=:now WHERE leave>:now-$dhcp_lease_secs AND mac=:mac");
 
 // 0MQ
@@ -57,7 +57,7 @@ while (true) {
     }
     
     // Extract payload
-    preg_match('/^[^ ]* DHCPACK[^ ]* [^ ]* ([^ ]*) ?(.*)/', $vars['MESSAGE'], $matches);
+    preg_match('/^[^ ]* DHCPACK[^ ]* ([^ ]*) ([^ ]*) ?(.*)/', $vars['MESSAGE'], $matches);
 
     // Transaction takes place until cursor update. If the script dies
     // while processing, it doesn't skip anything.
@@ -65,8 +65,9 @@ while (true) {
         // We have a payload. Populate all data and execute SQL
         $data = [
             'now' => floor($vars['__REALTIME_TIMESTAMP'] / 1000000), // seconds
-            'mac' => strtoupper(str_replace(':', '', $matches[1])), // uppercase mac with no colons
-            'host' => $matches[2],
+            'mac' => strtoupper(str_replace(':', '', $matches[2])), // uppercase mac with no colons
+            'ip' => $matches[1],
+            'host' => $matches[3],
         ];  
 
         if ($follow) $db->exec('BEGIN');
