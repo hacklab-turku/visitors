@@ -14,7 +14,7 @@ if (count($argv) < 2) {
 
 // Database
 $cursor = $db->querySingle('SELECT cursor FROM cursor');
-$cursor_stmt = $db->prepare("UPDATE cursor SET cursor=?");
+$update_cursor = $db->prepare("UPDATE cursor SET cursor=?");
 $add_visit = $db->prepare("INSERT INTO visit (mac, enter, leave, hostname) VALUES (:mac,:now,:now,:host)");
 $update_visit = $db->prepare("UPDATE visit SET leave=:now WHERE leave>:now-$dhcp_lease_secs AND mac=:mac");
 
@@ -71,14 +71,14 @@ while (true) {
 
         if ($follow) $db->exec('BEGIN');
 
-        //Try to update visit first if possible, otherwise insert new.
+        // Try to update visit first if possible, otherwise insert new.
         db_execute($update_visit, $data);
         if ($db->changes() === 0) {
             db_execute($add_visit, $data);
         }
 
-        // Now inserting the data and update cursor position
-        db_execute($cursor_stmt, [$vars['__CURSOR']]);
+        // Store current journal cursor position
+        db_execute($update_cursor, [$vars['__CURSOR']]);
 
         if ($follow) $db->exec('END');
     }
