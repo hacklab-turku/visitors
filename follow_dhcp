@@ -13,12 +13,10 @@ if (count($argv) < 2) {
 }
 
 // Database
-$cursor = $db->querySingle("SELECT value FROM state WHERE key='cursor'");
-$update_cursor = $db->prepare("UPDATE state SET value=? WHERE key='cursor'");
+$cursor = new SqlVar('cursor');
+$last_leave_rowid = new SqlVar('last_leave_rowid');
 $add_visit = $db->prepare("INSERT INTO visit (mac, enter, leave, ip, hostname) VALUES (:mac,:now,:now,:ip,:host)");
 $update_visit = $db->prepare("UPDATE visit SET leave=:now WHERE leave>:now-$dhcp_lease_secs AND mac=:mac");
-$last_leave_rowid = $db->querySingle("SELECT value FROM state WHERE key='last_leave_rowid'");
-$update_last_leave_rowid = $db->prepare("UPDATE state SET value=? WHERE key='last_leave_rowid'");
 $potential_leave = $db->prepare("SELECT v.rowid, nick, leave FROM visit v JOIN user_mac JOIN user u ON (SELECT id FROM user_mac m WHERE m.mac=v.mac ORDER BY changed DESC LIMIT 1)=u.id ORDER BY leave DESC LIMIT 1");
 
 // 0MQ
@@ -30,7 +28,7 @@ chmod($ipc_path, 0777); // Allow access to all local users
 */
 
 // Data source
-$after = $cursor === NULL ? '' : "'--after-cursor=$cursor'";
+$after = $cursor->v === NULL ? '' : "'--after-cursor=".$cursor->v."'";
 $follow_arg = $follow ? '-f' : '';
 $pipe = popen("journalctl -n all -u dnsmasq -o export $after $follow_arg", "r");
 
@@ -42,7 +40,7 @@ while (true) {
     $leaver = db_execute($potential_leave)->fetchArray(SQLITE3_ASSOC);
 
     // Deciding how long to wait
-    if ($leaver === FALSE || $leaver['rowid'] === $last_leave_rowid) {
+    if ($leaver === FALSE || $leaver['rowid'] === $last_leave_rowid->v) {
         // Already reported or no data yet. Wait infinitely.
         $delay = NULL;
     } else {
@@ -53,8 +51,7 @@ while (true) {
 
     if (!is_data_available($pipe, $delay)) {
         // No new data available. User has left.
-        $last_leave_rowid = $leaver['rowid'];
-        db_execute($update_last_leave_rowid, [$last_leave_rowid]);
+        $last_leave_rowid->set($leaver['rowid']);
         print("User ".$leaver['nick']." has left at ".date('c', $leaver['leave'])."\n");
         continue; // Start again
     }
@@ -105,7 +102,7 @@ while (true) {
         }
 
         // Store current journal cursor position
-        db_execute($update_cursor, [$vars['__CURSOR']]);
+        $cursor->set($vars['__CURSOR']);
 
         if ($follow) $db->exec('END');
     }

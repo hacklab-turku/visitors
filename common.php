@@ -1,6 +1,8 @@
 <?php
 $db = new SQLite3(__DIR__.'/db/db.sqlite');
 $db->busyTimeout(2000);
+$common_read_var = $db->prepare('SELECT value FROM state WHERE key=?');
+$common_update_var = $db->prepare('UPDATE state SET value=? WHERE key=?');
 
 function err($msg) {
     error_log($msg);
@@ -50,4 +52,25 @@ function is_data_available($fd, $secs) {
     $out = stream_select($fd_read, $fd_write, $fd_ex, $tv_sec, $tv_usec);
     if ($out < 0) err("Unable to select()");
     return $out !== 0;
+}
+
+class SqlVar {
+    private $k;
+    public $v;
+
+    public function __construct($k) {
+        global $common_read_var;
+        $this->k = $k;
+        $this->v = db_execute($common_read_var, [$k])->fetchArray(SQLITE3_NUM)[0];
+    }
+
+    public function set($new_v) {
+        global $common_update_var, $db;
+        if ($this->v === $new_v) return;
+        $this->v = $new_v;
+        db_execute($common_update_var, [$new_v, $this->k]);
+        if ($db->changes() !== 1) {
+            err('Key "'.$this->k.'" not singleton in table "state"');
+        }
+    }
 }

@@ -3,7 +3,7 @@ BEGIN;
 
 CREATE TABLE state (
 	key TEXT PRIMARY KEY,
-	value TEXT
+	value
 );
 INSERT INTO state (key) VALUES ('cursor'),('last_leave_rowid');
 
