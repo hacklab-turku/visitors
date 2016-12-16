@@ -15,9 +15,10 @@ if (count($argv) < 2) {
 // Database
 $cursor = new SqlVar('cursor');
 $last_leave_rowid = new SqlVar('last_leave_rowid');
+$is_empty = new SqlVar('is_empty');
 $add_visit = $db->prepare("INSERT INTO visit (mac, enter, leave, ip, hostname) VALUES (:mac,:now,:now,:ip,:host)");
 $update_visit = $db->prepare("UPDATE visit SET leave=:now WHERE leave>:now-$dhcp_lease_secs AND mac=:mac");
-$potential_leave = $db->prepare("SELECT v.rowid, nick, leave FROM visit v JOIN user_mac JOIN user u ON (SELECT id FROM user_mac m WHERE m.mac=v.mac ORDER BY changed DESC LIMIT 1)=u.id ORDER BY leave DESC LIMIT 1");
+$potential_leave = $db->prepare("SELECT v.rowid, nick, enter, leave FROM visit v JOIN user_mac JOIN user u ON (SELECT id FROM user_mac m WHERE m.mac=v.mac ORDER BY changed DESC LIMIT 1)=u.id ORDER BY leave DESC LIMIT 1");
 
 // 0MQ
 /*$zmq_context = new ZMQContext();
@@ -47,7 +48,14 @@ while (true) {
         // Calculate waiting timeout. Always wait for new data for at
         // least a second (helps if processing historical data)
         $delay = max(1, $leaver['leave'] + $dhcp_lease_secs - gettimeofday(true));
+
+        // There is something to wait for. If this is the first time,
+        // report it.
+        if ($is_empty->v) {
+            print("User ".$leaver['nick']." has joined at ".date('c', $leaver['enter'])."\n");
+        }
     }
+    $is_empty->set($delay === NULL);
 
     if (!is_data_available($pipe, $delay)) {
         // No new data available. User has left.
@@ -91,7 +99,7 @@ while (true) {
             'mac' => strtoupper(str_replace(':', '', $matches[2])), // uppercase mac with no colons
             'ip' => $matches[1],
             'host' => $matches[3],
-        ];  
+        ];
 
         if ($follow) $db->exec('BEGIN');
 

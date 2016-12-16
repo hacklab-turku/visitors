@@ -6,6 +6,7 @@ CREATE TABLE state (
 	value
 );
 INSERT INTO state (key) VALUES ('cursor'),('last_leave_rowid');
+INSERT INTO state (key,value) VALUES ('is_empty', 1);
 
 CREATE TABLE visit(
 	mac TEXT NOT NULL,
