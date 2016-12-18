@@ -26,7 +26,7 @@ $update_visit = $db->prepare("
     WHERE leave>:now-? AND mac=:mac
 ");
 $update_visit->bindValue(1,$dhcp_lease_secs);
-$potential_leave = $db->prepare("
+$find_last_visitor = $db->prepare("
     SELECT v.rowid, nick, enter, leave
     FROM visit v
     JOIN user_mac USING (mac)
@@ -57,29 +57,32 @@ if (!$follow) $db->exec('BEGIN');
 while (true) {
     // Calculate next potential leave time and wait until that to
     // decide if it the last person has left the premises.
-    $leaver = db_execute($potential_leave)->fetchArray(SQLITE3_ASSOC);
+    $last_visitor = db_execute($find_last_visitor)->fetchArray(SQLITE3_ASSOC);
 
     // Deciding how long to wait
-    if ($leaver === FALSE || $leaver['rowid'] === $last_leave_rowid->v) {
+    if (
+        $last_visitor === FALSE ||
+        $last_visitor['rowid'] === $last_leave_rowid->v
+    ) {
         // Already reported or no data yet. Wait infinitely.
         $delay = NULL;
     } else {
         // Calculate waiting timeout. Always wait for new data for at
         // least a second (helps if processing historical data)
-        $delay = max(1, $leaver['leave'] + $dhcp_lease_secs - gettimeofday(true));
+        $delay = max(1, $last_visitor['leave'] + $dhcp_lease_secs - gettimeofday(true));
 
         // There is something to wait for. If this is the first time,
         // report it.
         if ($is_empty->v) {
-            print("User ".$leaver['nick']." has joined at ".date('c', $leaver['enter'])."\n");
+            print("User ".$last_visitor['nick']." has joined at ".date('c', $last_visitor['enter'])."\n");
         }
     }
     $is_empty->set($delay === NULL);
 
     if (!is_data_available($pipe, $delay)) {
         // No new data available. User has left.
-        $last_leave_rowid->set($leaver['rowid']);
-        print("User ".$leaver['nick']." has left at ".date('c', $leaver['leave'])."\n");
+        $last_leave_rowid->set($last_visitor['rowid']);
+        print("User ".$last_visitor['nick']." has left at ".date('c', $last_visitor['leave'])."\n");
         continue; // Start again
     }
 
@@ -101,7 +104,11 @@ while (true) {
 
     // Entry must contain cursor, timestamp, and message. If not, then
     // it's better to give up 'cause we have received garbage.
-    if (!array_key_exists('MESSAGE', $vars) || !array_key_exists('__CURSOR', $vars) || !array_key_exists('__REALTIME_TIMESTAMP', $vars)) {
+    if (
+        !array_key_exists('MESSAGE', $vars) ||
+        !array_key_exists('__CURSOR', $vars) ||
+        !array_key_exists('__REALTIME_TIMESTAMP', $vars)
+    ) {
         print("Panic: Not systemd log export format\n");
         exit(1);
     }
