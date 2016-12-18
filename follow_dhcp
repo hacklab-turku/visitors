@@ -23,8 +23,9 @@ $add_visit = $db->prepare("
 $update_visit = $db->prepare("
     UPDATE visit
     SET leave=:now
-    WHERE leave>:now-$dhcp_lease_secs AND mac=:mac
+    WHERE leave>:now-? AND mac=:mac
 ");
+$update_visit->bindValue(1,$dhcp_lease_secs);
 $potential_leave = $db->prepare("
     SELECT v.rowid, nick, enter, leave
     FROM visit v
