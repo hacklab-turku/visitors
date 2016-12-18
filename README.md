@@ -81,3 +81,14 @@ console (start with `sqlite3 db/db.sqlite`) by running:
 SELECT mac, datetime(enter, 'unixepoch', 'localtime'), datetime(leave, 'unixepoch', 'localtime'), ip, hostname FROM visit;
 ```
 
+## Generating oident map
+
+If you want to generate map for oidentd so that connections coming
+from local network are identifiable from outside. This allows to get
+nicer IRC identities, for example.
+
+	./lab_visitors/ident_map | sudo tee /etc/oidentd_masq.conf
+	sudo service oidentd reload
+
+However, we never managed to get *oident* to detect masqueraded
+connections.

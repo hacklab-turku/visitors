@@ -1,0 +1,17 @@
+#!/bin/sh -eu
+
+cat <<EOF
+# auto-generated with `readlink -f $0`
+# <ip or host>[/mask] <username> <os>
+EOF
+sqlite3 "`dirname $0`/db/db.sqlite" <<EOF
+.mode tab
+SELECT DISTINCT ip,nick,'UNIX' from visit v
+JOIN user_mac USING (mac)
+JOIN user u ON (SELECT id FROM user_mac m
+                WHERE m.mac=v.mac
+		ORDER BY changed DESC
+		LIMIT 1
+	       )=u.id
+ORDER BY ip;
+EOF
