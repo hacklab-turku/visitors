@@ -39,13 +39,23 @@ $find_last_visitor = $db->prepare("
     LIMIT 1
 ");
 
-// 0MQ
-/*$zmq_context = new ZMQContext();
-$zmq_publisher = $zmq_context->getSocket(ZMQ::SOCKET_PUB);
-$ipc_path = __DIR__.'/updates.ipc';
-$zmq_publisher->bind("ipc://".$ipc_path);
-chmod($ipc_path, 0777); // Allow access to all local users
-*/
+// Connect to the message queue
+$context = new ZMQContext();
+$pub = new ZMQSocket($context, ZMQ::SOCKET_PUB);
+$pub->connect("tcp://127.0.0.1:61124");
+sleep(1); // Magic delay because the shitty bot is undocumented
+
+function to_irc($msg) {
+    // TODO make this not hardcoded
+    global $pub;
+    $pub->send(json_encode([
+        "target" => "#hacklab.jkl",
+        "command" => "PRIVMSG",
+        "from_channel" => true,
+        "connection" => "FreeNode",
+        "payload" => $msg,
+    ]));
+}
 
 // Data source
 $after = $cursor->v === NULL ? '' : "'--after-cursor=".$cursor->v."'";
@@ -74,7 +84,7 @@ while (true) {
         // There is something to wait for. If this is the first time,
         // report it.
         if ($is_empty->v) {
-            print("User ".$last_visitor['nick']." has joined at ".date('c', $last_visitor['enter'])."\n");
+            to_irc("Ensimmäisenä saapui ".$last_visitor['nick']." (klo ".date('H:i:s', $last_visitor['enter']).')');
         }
     }
     $is_empty->set($delay === NULL);
@@ -82,7 +92,7 @@ while (true) {
     if (!is_data_available($pipe, $delay)) {
         // No new data available. User has left.
         $last_leave_rowid->set($last_visitor['rowid']);
-        print("User ".$last_visitor['nick']." has left at ".date('c', $last_visitor['leave'])."\n");
+        to_irc("Viimeisenä poistui ".$last_visitor['nick']." (klo ".date('H:i:s', $last_visitor['leave']).')');
         continue; // Start again
     }
 
@@ -140,16 +150,6 @@ while (true) {
 
         if ($follow) $db->exec('END');
     }
-
-/*
-    // After storing the data, notify. Other way around the long
-    // poller might miss some data. And rowid wouldn't be available.
-    if ($data !== NULL) {
-        $out = implode(',',$data);
-        $zmq_publisher->send($out);
-        print($out."\n");
-    }
-*/
 }
 
 if (!$follow) $db->exec('END');
