@@ -78,7 +78,23 @@ database with `./init_db`. See some human readable data from SQLite3
 console (start with `sqlite3 db/db.sqlite`) by running:
 
 ```sql
-SELECT mac, datetime(enter, 'unixepoch', 'localtime'), datetime(leave, 'unixepoch', 'localtime'), ip, hostname FROM visit;
+SELECT mac, datetime(enter, 'unixepoch', 'localtime'),
+       datetime(leave, 'unixepoch', 'localtime'), ip, hostname
+FROM visit;
+```
+
+Get visitors with name:
+
+```sql
+SELECT nick, datetime(enter, 'unixepoch', 'localtime'),
+       datetime(leave, 'unixepoch', 'localtime')
+FROM visit v
+JOIN user_mac USING (mac)
+JOIN user u ON (SELECT id
+                FROM user_mac m
+                WHERE m.mac=v.mac
+                ORDER BY changed DESC LIMIT 1
+               )=u.id;
 ```
 
 ## Generating oident map
