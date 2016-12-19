@@ -23,9 +23,9 @@ $add_visit = $db->prepare("
 $update_visit = $db->prepare("
     UPDATE visit
     SET leave=:now
-    WHERE leave>:now-? AND mac=:mac
+    WHERE leave>:now-:lease AND mac=:mac
 ");
-$update_visit->bindValue(1,$dhcp_lease_secs);
+$update_visit->bindValue('lease',$dhcp_lease_secs);
 $find_last_visitor = $db->prepare("
     SELECT v.rowid, nick, enter, leave
     FROM visit v
