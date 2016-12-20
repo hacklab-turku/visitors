@@ -18,6 +18,8 @@ $get_visitors = $db->prepare("
     ORDER BY nick
 ");
 
+header("Content-Type: text/plain; charset=utf-8");
+
 $visits = db_execute($get_visitors, [
     'lease' => $dhcp_lease_secs,
     'now' => gettimeofday(true)
