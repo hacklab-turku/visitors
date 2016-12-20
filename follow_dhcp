@@ -1,7 +1,6 @@
 #!/usr/bin/env php
 <?php
 require_once(__DIR__.'/common.php');
-$dhcp_lease_secs = 300;
 
 // Process data up to date (--oneshot) or follow log continuously (no args)
 if (count($argv) < 2) {
@@ -32,7 +31,7 @@ $find_last_visitor = $db->prepare("
     JOIN user_mac USING (mac)
     JOIN user u ON (SELECT id
                     FROM user_mac m
-                    WHERE m.mac=v.mac
+                    WHERE m.mac=v.mac AND changed<leave
                     ORDER BY changed DESC LIMIT 1
                    )=u.id
     ORDER BY leave DESC
