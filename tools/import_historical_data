@@ -1,0 +1,39 @@
+#!/usr/bin/env php
+<?php
+# Import old data in column format. Import old data to empty table only!
+
+require_once(__DIR__.'/../common.php');
+$dhcp_lease_secs = 600; // 10 mins because old data is more dirty
+
+// Database
+$add_visit = $db->prepare("
+    INSERT INTO visit (mac, enter, leave, ip, hostname)
+    VALUES (:mac,:now,:now,'','')
+");
+$update_visit = $db->prepare("
+    UPDATE visit
+    SET leave=:now
+    WHERE leave>:now-:lease AND mac=:mac
+");
+$update_visit->bindValue('lease',$dhcp_lease_secs);
+
+$db->exec('BEGIN');
+
+while (($line = stream_get_line(STDIN, 2048, "\n"))) {
+    $macs = explode(' ', $line);
+    $time = DateTime::createFromFormat('Y-m-d\TH-i-s' , array_shift($macs))->getTimestamp();
+    foreach($macs as $mac) {
+        $data = [
+            'now' => $time,
+            'mac' => strtoupper(str_replace(':', '', $mac)),
+        ];
+
+        // Try to update visit first if possible, otherwise insert new.
+        db_execute($update_visit, $data);
+        if ($db->changes() === 0) {
+            db_execute($add_visit, $data);
+        }
+    }
+}
+
+$db->exec('END');
