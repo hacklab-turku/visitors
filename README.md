@@ -80,7 +80,8 @@ console (start with `sqlite3 db/db.sqlite`) by running:
 ```sql
 SELECT mac, datetime(enter, 'unixepoch', 'localtime'),
        datetime(leave, 'unixepoch', 'localtime'), ip, hostname
-FROM visit;
+FROM visit
+ORDER BY enter;
 ```
 
 Get visitors with name:
