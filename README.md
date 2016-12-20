@@ -113,7 +113,7 @@ connections.
 
 If you have way too many short visits due to misconfigured
 `$dhcp_lease_secs` or want to clean up old data by merging short-term
-visits (within <10 minutes), there is tool `cleanup_old_data`.
+visits (within <10 minutes), there is tool `tools/cleanup_old_data`.
 
 It reads current *visit* table and imports the data into *visit\_new*
 while re-evaluating the `$dhcp_lease_secs` for all data on that table.
