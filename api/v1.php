@@ -1,5 +1,5 @@
 <?php
-require_once(__DIR__.'/common.php');
+require_once(__DIR__.'/../common.php');
 
 // Universal visitor fetching query. When not searching the current
 // visitors, set :lease to 0 because we already know the leave date if
@@ -25,5 +25,4 @@ $visits = db_execute($get_visitors, [
 
 while (($data = $visits->fetchArray(SQLITE3_ASSOC))) {
     print($data['nick']." (saapui ".date('H:i', $data['enter']).")\n");
-//    print_r($data);
 }
