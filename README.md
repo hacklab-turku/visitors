@@ -108,3 +108,14 @@ nicer IRC identities, for example.
 
 However, we never managed to get *oident* to detect masqueraded
 connections.
+
+## Cleaning the data
+
+If you have way too many short visits due to misconfigured
+`$dhcp_lease_secs` or want to clean up old data by merging short-term
+visits (within <10 minutes), there is tool `cleanup_old_data`.
+
+It reads current *visit* table and imports the data into *visit\_new*
+while re-evaluating the `$dhcp_lease_secs` for all data on that table.
+You should stop `follow_dhcp` while running the tool and rename
+*visit\_new* to *visit*. Don't forget to recreate the indices!
