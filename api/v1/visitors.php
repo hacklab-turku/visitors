@@ -7,7 +7,6 @@ require_once(__DIR__.'/../../common.php');
 $get_visitors = $db->prepare("
     SELECT nick, min(enter) as enter
     FROM visit v
-    JOIN user_mac USING (mac)
     JOIN user u ON (SELECT id
                     FROM user_mac m
                     WHERE m.mac=v.mac AND changed<leave
