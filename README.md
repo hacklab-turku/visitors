@@ -22,7 +22,7 @@ work with any system running *systemd*.
 Install requirements (as root):
 
 ```sh
-apt install php-cli php-sqlite3 php-zmq
+apt install php-cli php-sqlite3 php-zmq php-fpm nginx
 ```
 
 Initialize database:
@@ -47,10 +47,31 @@ In the same file, enable logging (a must for this to work):
 
 	log-dhcp
 
+If you want to serve public parts of the data, let's configure
+nginx. Add to nginx server block the following (adapt php-fpm socket
+path to your system):
+
+```
+location /api {
+	root /PATH/TO/visitors;
+	try_files $uri $uri/ @extensionless-php;
+
+	location ~ \.php$ {
+		include snippets/fastcgi-php.conf;
+		fastcgi_pass unix:/run/php/php7.0-fpm.sock;
+	}
+}
+
+location @extensionless-php {
+	rewrite (.*) $1.php last;
+}
+```
+
 Reload services (as root):
 
 	service systemd-journald restart
 	service dnsmasq reload
+	service nginx reload
 
 ## Running
 
@@ -84,6 +105,10 @@ FROM visit
 ORDER BY enter;
 ```
 
+## Other stuff
+
+### Useful queries
+
 Get visitors with name:
 
 ```sql
@@ -98,7 +123,7 @@ JOIN user u ON (SELECT id
                )=u.id;
 ```
 
-## Generating oident map
+### Generating oident map
 
 If you want to generate map for oidentd so that connections coming
 from local network are identifiable from outside. This allows to get
@@ -110,7 +135,7 @@ nicer IRC identities, for example.
 However, we never managed to get *oident* to detect masqueraded
 connections.
 
-## Cleaning the data
+### Cleaning the data
 
 If you have way too many short visits due to misconfigured
 `$dhcp_lease_secs` or want to clean up old data by merging short-term
