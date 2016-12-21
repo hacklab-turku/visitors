@@ -39,11 +39,20 @@ case 'text':
 case 'iframe':
     $at_human = date('H:i', $req['now']);
     header("Content-Type: text/html; charset=utf-8");
-    print("<html><body style='color:white'>\nHacklabin WLANissa nyt:<b><br />\n");
+
+    // Just implementing the previous HTML template even though it is
+    // not valid.
+    print("<html><body style='color:white'>");
+    $msg = '';
     while (($data = $visits->fetchArray(SQLITE3_ASSOC))) {
-        print($data['nick']."\n");
+        $msg .= $data['nick']."\n";
     }
-    print("</b><br />(päivitetty kello $at_human, ilmoita MAC-osoitteesi jpa:lle)</body></html>\n");
+    if ($msg == '') {
+        print("Hacklabin WLANissa ei ole nyt ketään.<br />");
+    } else {
+        print("Hacklabin WLANissa nyt:<br /><b>\n$msg</b>");
+    }
+    print("<br />(päivitetty kello $at_human, ilmoita MAC-osoitteesi jpa:lle)</body></html>\n");
     break;
 case 'json':
     header("Content-Type: application/json; charset=utf-8");
