@@ -18,13 +18,43 @@ $get_visitors = $db->prepare("
     ORDER BY nick
 ");
 
-header("Content-Type: text/plain; charset=utf-8");
+// Search with timestamp or current visitors
+$req = array_key_exists('at', $_GET) ?
+    [
+        'lease' => 0,
+        'now' => intval($_GET['at'])
+    ] : [
+        'lease' => $dhcp_lease_secs,
+        'now' => gettimeofday(true)
+    ];
+$visits = db_execute($get_visitors, $req);
 
-$visits = db_execute($get_visitors, [
-    'lease' => $dhcp_lease_secs,
-    'now' => gettimeofday(true)
-]);
-
-while (($data = $visits->fetchArray(SQLITE3_ASSOC))) {
-    print($data['nick']." (saapui ".date('H:i', $data['enter']).")\n");
+switch (@$_GET['format'] ?: 'text') {
+case 'text':
+    header("Content-Type: text/plain; charset=utf-8");
+    while (($data = $visits->fetchArray(SQLITE3_ASSOC))) {
+        print($data['nick']." (saapui ".date('H:i', $data['enter']).")\n");
+    }
+    break;
+case 'iframe':
+    $at_human = date('H:i', $req['now']);
+    header("Content-Type: text/html; charset=utf-8");
+    print("<html><body style='color:white'>\nHacklabin WLANissa nyt:<b><br />\n");
+    while (($data = $visits->fetchArray(SQLITE3_ASSOC))) {
+        print($data['nick']."\n");
+    }
+    print("</b><br />(päivitetty kello $at_human, ilmoita MAC-osoitteesi jpa:lle)</body></html>\n");
+    break;
+case 'json':
+    header("Content-Type: application/json; charset=utf-8");
+    $a = [];
+    while (($data = $visits->fetchArray(SQLITE3_ASSOC))) {
+        array_push($a, $data);
+    }
+    print(json_encode($a)."\n");
+    break;
+default:
+    http_response_code(400);
+    header("Content-Type: text/plain; charset=utf-8");
+    print("Invalid format\n");
 }
