@@ -25,16 +25,24 @@ output. You may leave it out if you can natively parse JSON :-)
 
 Get list of nicknames:
 
-	curl http://hacklab.ihme.org/api/v1/nicks | jq
-
+```sh
+curl http://hacklab.ihme.org/api/v1/nicks | jq
+```
+	
 Get info associated to your device:
 
-	curl http://hacklab.ihme.org/api/v1/nick | jq
+```sh
+curl http://hacklab.ihme.org/api/v1/nick | jq
+```
 
 Set a nickname for your device (you may use the same nickname for all of your devices):
 
-	curl -X PUT http://hacklab.ihme.org/api/v1/nick?nick=Hillosipuli
+```sh
+curl -X PUT http://hacklab.ihme.org/api/v1/nick?nick=Hillosipuli
+```
 
 Stop tracking:
 
-	curl -X DELETE http://hacklab.ihme.org/api/v1/nick
+```sh
+curl -X DELETE http://hacklab.ihme.org/api/v1/nick
+```
