@@ -33,6 +33,7 @@ $insert_by_uid = $db->prepare("
 	ORDER BY leave DESC
 	LIMIT 1
 ");
+$insert_by_uid->bindValue('now', time()-$dhcp_lease_secs);
 
 // Find user ID by nick
 $find_uid = $db->prepare("
@@ -56,7 +57,6 @@ case 'GET':
 case 'DELETE':
     db_execute($insert_by_uid, [
         'id'  => NULL,
-        'now' => time(),
         'ip'  => $ip
     ]);
     $o = $db->changes() === 1 ? ["success" => TRUE] : $outerror;
@@ -78,7 +78,6 @@ case 'PUT':
     // We know uid by now, let's insert
     db_execute($insert_by_uid, [
         'id'  => $uid,
-        'now' => time(),
         'ip'  => $ip
     ]);
     $o = $db->changes() === 1 ? ["success" => TRUE] : $outerror;
