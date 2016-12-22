@@ -6,10 +6,10 @@ RESTful interface is served via HTTP for changing the nickname associated wtih t
 
 method | endpoint | description
 --- | --- | ---
-GET | /api/v1/nicks | List all nicknames on the system
-GET | /api/v1/nick | Get information about the device
-PUT | /api/v1/nick | Start tracking the device. Parameters in: `nick`
-DELETE | /api/v1/nick | Delete device, do not track anymore
+GET | /v1/nicks | List all nicknames on the system
+GET | /v1/nick | Get information about the device
+PUT | /v1/nick | Start tracking the device. Parameters in: `nick`
+DELETE | /v1/nick | Delete device, do not track anymore
 
 All endpoints except `/api/v1/nicks` show only your data associated to
 the MAC of your device.
