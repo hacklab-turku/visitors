@@ -20,8 +20,8 @@ The following examples operate on API endpoints of Hacklab
 Jyväskylä. Change the URL to your site before running in other
 networks.
 
-The examples are piped through jq which pretty-prints the output. You
-may leave it out if you can natively parse JSON :-)
+The examples below are piped through `jq` which pretty-prints the
+output. You may leave it out if you can natively parse JSON :-)
 
 Get list of nicknames:
 
