@@ -31,6 +31,9 @@ Initialize database:
 ./init_db
 ```
 
+Remember to adjust database privileges to allow writes by user of
+*php-fpm* which is `www-data` by default.
+
 Make systemd journal persistent by editing
 `/etc/systemd/journald.conf` and making sure that you have the
 following option:

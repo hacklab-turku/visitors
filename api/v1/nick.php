@@ -24,10 +24,68 @@ $get_user = $db->prepare("
 	LIMIT 1
 ");
 
-$ip = $_SERVER['REMOTE_ADDR'];
-$data =
-    db_execute($get_user, [$ip])->fetchArray(SQLITE3_ASSOC) ?:
-    ["error" => "You are outside the lab network ($ip)"];
+// Insert device by UID. This can be used for deleting as well when :id is NULL
+$insert_by_uid = $db->prepare("
+	INSERT INTO user_mac (id, mac, changed)
+	SELECT :id, mac, :now
+	FROM visit
+	WHERE ip=:ip
+	ORDER BY leave DESC
+	LIMIT 1
+");
 
+// Find user ID by nick
+$find_uid = $db->prepare("
+	SELECT id FROM user WHERE nick=?
+");
+
+// Insert user ID if possible
+$insert_user = $db->prepare("
+	INSERT INTO user (nick)
+	VALUES (?)
+");
+
+$ip = $_SERVER['REMOTE_ADDR'];
+$outerror = ["error" => "You are outside the lab network ($ip)"];
+$nickmissing = ["error" => "You must specify your nickname as parameter 'nick'"];
+
+switch ($_SERVER['REQUEST_METHOD']) {
+case 'GET':
+    $o = db_execute($get_user, [$ip])->fetchArray(SQLITE3_ASSOC) ?: $outerror;
+    break;
+case 'DELETE':
+    db_execute($insert_by_uid, [
+        'id'  => NULL,
+        'now' => time(),
+        'ip'  => $ip
+    ]);
+    $o = $db->changes() === 1 ? ["success" => TRUE] : $outerror;
+    break;
+case 'PUT':
+    if (!array_key_exists('nick', $_GET)) {
+        $o = $nickmissing;
+        break;
+    }
+
+    $row = db_execute($find_uid, [$_GET['nick']])->fetchArray(SQLITE3_ASSOC);
+    if ($row === FALSE) {
+        db_execute($insert_user, [$_GET['nick']]);
+        $uid = $db->lastInsertRowid();
+    } else {
+        $uid = $row['id'];
+    }
+
+    // We know uid by now, let's insert
+    db_execute($insert_by_uid, [
+        'id'  => $uid,
+        'now' => time(),
+        'ip'  => $ip
+    ]);
+    $o = $db->changes() === 1 ? ["success" => TRUE] : $outerror;
+    break;
+default:
+    $o = ["error" => "Unsupported method"];
+}
+    
 header("Content-Type: application/json; charset=utf-8");
-print(json_encode($data)."\n");
+print(json_encode($o)."\n");
