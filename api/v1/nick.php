@@ -9,7 +9,7 @@ require_once(__DIR__.'/../../common.php');
 // SELECT nick FROM user WHERE id=:id
 
 // Get person info by querying by latest IP
-$get_visitors = $db->prepare("
+$get_user = $db->prepare("
 	SELECT v.mac, hostname, nick, changed
 	FROM visit v
 	LEFT JOIN user_mac m ON (SELECT rowid
@@ -26,7 +26,7 @@ $get_visitors = $db->prepare("
 
 $ip = $_SERVER['REMOTE_ADDR'];
 $data =
-    db_execute($get_visitors, [$ip])->fetchArray(SQLITE3_ASSOC) ?:
+    db_execute($get_user, [$ip])->fetchArray(SQLITE3_ASSOC) ?:
     ["error" => "You are outside the lab network ($ip)"];
 
 header("Content-Type: application/json; charset=utf-8");

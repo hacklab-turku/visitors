@@ -19,6 +19,7 @@ CREATE TABLE visit(
 CREATE INDEX ix_visit_mac ON visit (mac,enter);
 CREATE INDEX ix_visit_enter ON visit (enter, mac);
 CREATE INDEX ix_visit_leave ON visit (leave, mac);
+CREATE INDEX ix_visit_ip ON visit (ip, leave DESC);
 
 CREATE TABLE user(
 	id INTEGER PRIMARY KEY,
