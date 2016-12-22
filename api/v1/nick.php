@@ -67,6 +67,7 @@ case 'PUT':
         break;
     }
 
+    $db->exec('BEGIN');
     $row = db_execute($find_uid, [$_GET['nick']])->fetchArray(SQLITE3_ASSOC);
     if ($row === FALSE) {
         db_execute($insert_user, [$_GET['nick']]);
@@ -80,7 +81,15 @@ case 'PUT':
         'id'  => $uid,
         'ip'  => $ip
     ]);
-    $o = $db->changes() === 1 ? ["success" => TRUE] : $outerror;
+
+    if ($db->changes() === 1) {
+        $o = ["success" => TRUE];
+        $db->exec('END');
+    } else {
+        $o = $outerror;
+        // Do not allow trolling outside the lab network
+        $db->exec('ROLLBACK');
+    }
     break;
 default:
     $o = ["error" => "Unsupported method"];
