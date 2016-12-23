@@ -14,7 +14,7 @@ GET | /v1/nick | - | Get information about the device
 PUT | /v1/nick | nick | Track the device using nickname *nick*. Multiple devices can share the same name.
 DELETE | /v1/nick | - | Delete device, do not track anymore
 
-All endpoints except `/api/v1/nicks` show only your data associated to
+All endpoints except `/v1/nicks` show only your data associated to
 the MAC of your device.
 
 ## Examples
@@ -26,26 +26,26 @@ networks.
 The examples below are piped through `jq` which pretty-prints the
 output. You may leave it out if you can natively parse JSON :-)
 
-Get list of nicknames:
+Get list of visitors:
 
-```sh
-curl http://hacklab.ihme.org/api/v1/nicks | jq
-```
+	curl http://hacklab.ihme.org/api/v1/visitors?format=json | jq
+
+Get list of visitors last Tuesday at 8 PM:
+
+	curl "http://hacklab.ihme.org/api/v1/visitors?format=json&at=`date +%s -d 'last tuesday 20'`" | jq
+
+Get list of registered nicknames:
+
+	curl http://hacklab.ihme.org/api/v1/nicks | jq
 	
 Get info associated to your device:
 
-```sh
-curl http://hacklab.ihme.org/api/v1/nick | jq
-```
+	curl http://hacklab.ihme.org/api/v1/nick | jq
 
 Set a nickname for your device (you may use the same nickname for all of your devices):
 
-```sh
-curl -X PUT http://hacklab.ihme.org/api/v1/nick?nick=Hillosipuli
-```
+	curl -X PUT http://hacklab.ihme.org/api/v1/nick?nick=Hillosipuli
 
 Stop tracking:
 
-```sh
-curl -X DELETE http://hacklab.ihme.org/api/v1/nick
-```
+	curl -X DELETE http://hacklab.ihme.org/api/v1/nick
