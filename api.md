@@ -2,14 +2,17 @@
 
 # API documentation
 
-RESTful interface is served via HTTP for changing the nickname associated wtih the nick.P
+RESTful interface is served via HTTP for changing the nickname
+associated wtih the nick and getting user listings, both real-time and
+historical.
 
-method | endpoint | description
---- | --- | ---
-GET | /v1/nicks | List all nicknames on the system
-GET | /v1/nick | Get information about the device
-PUT | /v1/nick | Start tracking the device. Parameters in: `nick`
-DELETE | /v1/nick | Delete device, do not track anymore
+method | endpoint | arguments | description
+------ | -------- | --------- | -----------
+GET | /v1/visitors | at<br>format | Get visitor nicknames. Time can be given with `at`, defaults to present. Possible `format` options are `text` (default) for human readable list, `iframe` for legacy HTML format for web site, and `json` for JSON format.
+GET | /v1/nicks | - | List all nicknames on the system
+GET | /v1/nick | - | Get information about the device
+PUT | /v1/nick | nick | Start tracking the device using given nickname. Multple devices can share the same nickname.
+DELETE | /v1/nick | - | Delete device, do not track anymore
 
 All endpoints except `/api/v1/nicks` show only your data associated to
 the MAC of your device.
