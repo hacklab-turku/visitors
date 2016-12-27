@@ -96,7 +96,7 @@ while (true) {
         // There is something to wait for. If this is the first time,
         // report it.
         if ($is_empty->v) {
-            to_irc("Ensimmäisenä saapui ".$last_visitor['nick']." (klo ".date('H:i:s', $last_visitor['enter']).')');
+            to_irc("Ensimmäisenä saapui ".$last_visitor['nick']);
         }
     }
     $is_empty->set($delay === NULL);
