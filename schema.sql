@@ -5,8 +5,8 @@ CREATE TABLE state (
 	key TEXT PRIMARY KEY,
 	value
 );
-INSERT INTO state (key) VALUES ('cursor'),('last_leave_rowid');
-INSERT INTO state (key,value) VALUES ('is_empty', 1);
+INSERT INTO state (key) VALUES ('cursor');
+INSERT INTO state (key,value) VALUES ('last_leave', 0),('is_empty', 1);
 
 CREATE TABLE visit(
 	mac TEXT NOT NULL,
