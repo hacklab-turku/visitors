@@ -59,13 +59,13 @@ function to_irc($msg) {
 
 function leave_line(&$a) {
     $msg = "Hacklab on nyt tyhjä. Paikalla oli";
-    $msg .= count($msg) > 1 ? 'vat ' : ' ';
+    $msg .= count($a) > 1 ? 'vat ' : ' ';
     foreach ($a as $user) {
         $msg .=
             $user['nick'].' ('.
-            date('H:i:s', $user['enter']).
+            date('H:i', $user['enter']).
             '–'.
-            date('H:i:s', $user['leave']).
+            date('H:i', $user['leave']).
             '), ';
     }
     return substr($msg, 0, -2); // Remove comma+space
