@@ -16,7 +16,7 @@ $visits = get_visitors($req);
 switch (@$_GET['format'] ?: 'text') {
 case 'text':
     header("Content-Type: text/plain; charset=utf-8");
-    while (($data = $visits->fetchArray(SQLITE3_ASSOC))) {
+    foreach ($visits as $data) {
         print($data['nick']." (saapui ".date('H:i', $data['enter']).")\n");
     }
     break;
@@ -28,7 +28,7 @@ case 'iframe':
     // not valid.
     print("<html><body style='color:white'>");
     $msg = '';
-    while (($data = $visits->fetchArray(SQLITE3_ASSOC))) {
+    foreach ($visits as $data) {
         $msg .= $data['nick']."\n";
     }
     if ($msg == '') {
@@ -40,11 +40,7 @@ case 'iframe':
     break;
 case 'json':
     header("Content-Type: application/json; charset=utf-8");
-    $a = [];
-    while (($data = $visits->fetchArray(SQLITE3_ASSOC))) {
-        array_push($a, $data);
-    }
-    print(json_encode($a)."\n");
+    print(json_encode($visits)."\n");
     break;
 default:
     http_response_code(400);

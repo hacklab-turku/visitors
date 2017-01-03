@@ -2,26 +2,21 @@
 <?php
 require_once(__DIR__.'/common.php');
 require_once(__DIR__.'/lib/visitors.php');
+require_once(__DIR__.'/lib/irc.php');
 
-// Search with timestamp or current visitors
+// Search current visitors
 $req = [
     'lease' => $dhcp_lease_secs,
     'now' => gettimeofday(true)
 ];
 $visits = get_visitors($req);
 
-// Populate array of visitors
-$a = [];
-while (($data = $visits->fetchArray(SQLITE3_ASSOC))) {
-    array_push($a, $data);
-}
-
-if (count($a) === 0) {
+if (count($visits) === 0) {
     $msg = "Kerhoilta alkaisi, mutta Hacklab on vielä tyhjä :/";
 } else {
     $msg = "Kerhoilta alkoi, paikalla ";
-    $msg .= count($a) > 1 ? 'ovat ' : 'on ';
-    foreach ($a as $user) {
+    $msg .= count($visits) > 1 ? 'ovat ' : 'on ';
+    foreach ($visits as $user) {
         $msg .=
             $user['nick'].' (saapui '.
             date('H:i', $user['enter']).

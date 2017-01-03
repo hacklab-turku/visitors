@@ -22,5 +22,10 @@ $visitors_stmt = $db->prepare("
 // Return result set with visitors
 function get_visitors($args) {
     global $visitors_stmt;
-    return db_execute($visitors_stmt, $args);
+    $res = db_execute($visitors_stmt, $args);
+    $a = [];
+    while (($data = $res->fetchArray(SQLITE3_ASSOC))) {
+        array_push($a, $data);
+    }
+    return $a;
 }
