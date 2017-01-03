@@ -1,6 +1,7 @@
 #!/usr/bin/env php
 <?php
 require_once(__DIR__.'/common.php');
+require_once(__DIR__.'/lib/irc.php');
 
 // Process data up to date (--oneshot) or follow log continuously (no args)
 if (count($argv) < 2) {
@@ -38,24 +39,6 @@ $find_leavers = $db->prepare("
 	WHERE leave > ?
 	ORDER BY leave DESC
 ");
-
-// Connect to the message queue
-$context = new ZMQContext();
-$pub = new ZMQSocket($context, ZMQ::SOCKET_PUB);
-$pub->connect("tcp://127.0.0.1:61124");
-sleep(1); // Magic delay because the shitty bot is undocumented
-
-function to_irc($msg) {
-    // TODO make this not hardcoded
-    global $pub;
-    $pub->send(json_encode([
-        "target" => "#hacklab.jkl",
-        "command" => "PRIVMSG",
-        "from_channel" => true,
-        "connection" => "FreeNode",
-        "payload" => $msg,
-    ]));
-}
 
 function leave_line(&$a) {
     $msg = "Hacklab on nyt tyhjä. Paikalla oli";
