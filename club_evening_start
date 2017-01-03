@@ -1,0 +1,34 @@
+#!/usr/bin/env php
+<?php
+require_once(__DIR__.'/common.php');
+require_once(__DIR__.'/lib/visitors.php');
+
+// Search with timestamp or current visitors
+$req = [
+    'lease' => $dhcp_lease_secs,
+    'now' => gettimeofday(true)
+];
+$visits = get_visitors($req);
+
+// Populate array of visitors
+$a = [];
+while (($data = $visits->fetchArray(SQLITE3_ASSOC))) {
+    array_push($a, $data);
+}
+
+if (count($a) === 0) {
+    $msg = "Kerhoilta alkaisi, mutta Hacklab on vielä tyhjä :/";
+} else {
+    $msg = "Kerhoilta alkoi, paikalla ";
+    $msg .= count($a) > 1 ? 'ovat ' : 'on ';
+    foreach ($a as $user) {
+        $msg .=
+            $user['nick'].' (saapui '.
+            date('H:i', $user['enter']).
+            '), ';
+    }
+    $msg = substr($msg, 0, -2); // Remove comma+space
+    $msg .= ". Tervetuloa!";
+}
+
+to_irc($msg);
