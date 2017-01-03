@@ -1,21 +1,6 @@
 <?php
 require_once(__DIR__.'/../../common.php');
-
-// Universal visitor fetching query. When not searching the current
-// visitors, set :lease to 0 because we already know the leave date if
-// we are dealing with historic data.
-$get_visitors = $db->prepare("
-    SELECT nick, min(enter) as enter
-    FROM visit v
-    JOIN user u ON (SELECT id
-                    FROM user_mac m
-                    WHERE m.mac=v.mac AND changed<leave
-                    ORDER BY changed DESC LIMIT 1
-                   )=u.id
-    WHERE enter<=:now AND leave>:now-:lease
-    GROUP BY u.id
-    ORDER BY nick
-");
+require_once(__DIR__.'/../../lib/visitors.php');
 
 // Search with timestamp or current visitors
 $req = array_key_exists('at', $_GET) ?
@@ -26,7 +11,7 @@ $req = array_key_exists('at', $_GET) ?
         'lease' => $dhcp_lease_secs,
         'now' => gettimeofday(true)
     ];
-$visits = db_execute($get_visitors, $req);
+$visits = get_visitors($req);
 
 switch (@$_GET['format'] ?: 'text') {
 case 'text':
