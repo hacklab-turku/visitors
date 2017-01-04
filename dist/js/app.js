@@ -39,7 +39,7 @@ var app = new Vue({
 	setNick: function (nick) {
 	    var xhr = new XMLHttpRequest()
 	    var self = this
-	    xhr.open('PUT', apiURL + '?nick=' + encodeURIComponent(nick))
+	    xhr.open('PUT', apiURL + '?nick=' + encodeURIComponent(nick === null ? '' : nick))
 	    xhr.onload = function () {
 		var out = JSON.parse(xhr.responseText)
 		if (out.error) {
