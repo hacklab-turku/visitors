@@ -1,6 +1,6 @@
 <?php
-require_once(__DIR__.'/../../common.php');
-require_once(__DIR__.'/../../lib/visitors.php');
+require_once(__DIR__.'/../../../lib/common.php');
+require_once(__DIR__.'/../../../lib/visitors.php');
 
 // Search with timestamp or current visitors
 $req = array_key_exists('at', $_GET) ?
@@ -36,7 +36,7 @@ case 'iframe':
     } else {
         print("Hacklabin WLANissa nyt:<br /><b>\n$msg</b>");
     }
-    print("<br />(päivitetty kello $at_human, ilmoita MAC-osoitteesi jpa:lle)</body></html>\n");
+    print("<br />(päivitetty klo $at_human) <a style=\"color: #66ffff;\" target=\"_blank\" href=\"../..\">Muuta tietojasi</a></body></html>\n");
     break;
 case 'json':
     header("Content-Type: application/json; charset=utf-8");

@@ -1,5 +1,5 @@
 <?php
-require_once(__DIR__.'/../../common.php');
+require_once(__DIR__.'/../../../lib/common.php');
 
 // Here are the individual SQL queries for each phase for clarity and
 // below it is a mash-up of them for effectiveness

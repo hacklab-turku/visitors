@@ -1,5 +1,5 @@
 <?php
-require_once(__DIR__.'/../../common.php');
+require_once(__DIR__.'/../../../lib/common.php');
 
 $get_nicks = $db->prepare("
     SELECT nick FROM user ORDER by nick

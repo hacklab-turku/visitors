@@ -55,13 +55,14 @@ nginx. Add to nginx server block the following (adapt php-fpm socket
 path to your system):
 
 ```
-location /api {
-	root /PATH/TO/visitors;
+location /visitors {
+	root /PATH/TO/visitors/dist;
 	try_files $uri $uri/ @extensionless-php;
 
 	location ~ \.php$ {
 		include snippets/fastcgi-php.conf;
 		fastcgi_pass unix:/run/php/php7.0-fpm.sock;
+		fastcgi_param SCRIPT_FILENAME $request_filename;
 	}
 }
 

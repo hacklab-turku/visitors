@@ -1,5 +1,5 @@
 <?php
-$db = new SQLite3(__DIR__.'/db/db.sqlite');
+$db = new SQLite3(__DIR__.'/../db/db.sqlite');
 $db->busyTimeout(2000);
 $dhcp_lease_secs = 300;
 $common_read_var = $db->prepare('SELECT value FROM state WHERE key=?');

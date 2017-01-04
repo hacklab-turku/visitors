@@ -1,5 +1,5 @@
 <?php
-require_once(__DIR__.'/../common.php');
+require_once(__DIR__.'/common.php');
 
 // Universal visitor fetching query. When not searching the current
 // visitors, set :lease to 0 because we already know the leave date if

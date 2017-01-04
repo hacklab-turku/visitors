@@ -1,4 +1,4 @@
-var apiURL = 'http://hacklab.ihme.org/api/v1/nick';
+var apiURL = 'api/v1/nick';
 var fiTime = new Intl.DateTimeFormat(
     'fi-FI', { year: 'numeric', month: 'numeric', day: 'numeric',
 	       hour: 'numeric', minute: 'numeric' }
