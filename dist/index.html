@@ -16,29 +16,31 @@
 
   <div id="app">
     <p id="error">{{ user.error }}</p>
-    
-    <table>
-      <tr>
-	<th>MAC</th>
-	<td>{{ user.mac | formatMac }}</td>
-      </tr>
-      <tr>
-	<th>Koneen nimi</th>
-	<td>{{ user.hostname }}</td>
-      </tr>
-      <tr>
-	<th>Viimeksi muutettu</th>
-	<td>{{ user.changed | formatDate }}</td>
-      </tr>
-      <tr>
-	<th><label for="nick">Nimimerkki</label></th>
-	<td>
-	  <input id="nick" type="text" v-model="user.nick">
-	  <button type="button" v-on:click="setNick(user.nick)">Vaihda</button>
-	</td>
-      </tr>
-    </table>
-    <button type="button" v-on:click="delNick()">Lopeta tämän laitteen seuranta</button>
+
+    <template v-if="user.errorcode !== 'OUT'">
+      <table>
+	<tr>
+	  <th>MAC</th>
+	  <td>{{ user.mac | formatMac }}</td>
+	</tr>
+	<tr>
+	  <th>Koneen nimi</th>
+	  <td>{{ user.hostname }}</td>
+	</tr>
+	<tr>
+	  <th>Viimeksi muutettu</th>
+	  <td>{{ user.changed | formatDate }}</td>
+	</tr>
+	<tr>
+	  <th><label for="nick">Nimimerkki</label></th>
+	  <td>
+	    <input id="nick" type="text" v-model="user.nick">
+	    <button type="button" v-on:click="setNick(user.nick)">Vaihda</button>
+	  </td>
+	</tr>
+      </table>
+      <button type="button" v-on:click="delNick()">Lopeta tämän laitteen seuranta</button>
+    </template>
   </div>
 
   <script src="js/app.js"></script>  

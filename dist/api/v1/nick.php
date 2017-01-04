@@ -47,8 +47,14 @@ $insert_user = $db->prepare("
 ");
 
 $ip = $_SERVER['REMOTE_ADDR'];
-$outerror = ["error" => "You are outside the lab network ($ip)"];
-$nickmissing = ["error" => "You must specify your nickname as parameter 'nick'"];
+$outerror = [
+    "error" => "You are outside the lab network ($ip)",
+    "errorcode" => "OUT"
+];
+$nickmissing = [
+    "error" => "You must specify your nickname as parameter 'nick'",
+    "errorcode" => "EMPTY"
+];
 
 switch ($_SERVER['REQUEST_METHOD']) {
 case 'GET':
@@ -62,7 +68,7 @@ case 'DELETE':
     $o = $db->changes() === 1 ? ["success" => TRUE] : $outerror;
     break;
 case 'PUT':
-    if (!array_key_exists('nick', $_GET)) {
+    if (!array_key_exists('nick', $_GET) || $_GET['nick'] === '') {
         $o = $nickmissing;
         break;
     }
