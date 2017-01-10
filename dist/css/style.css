@@ -11,3 +11,7 @@ blink, .blink {
 @keyframes blink {
   67% { opacity: 0 }
 }
+
+#error {
+    color: red;
+}

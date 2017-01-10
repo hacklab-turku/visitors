@@ -1,6 +1,6 @@
 #!/usr/bin/env php
 <?php
-require_once(__DIR__.'/common.php');
+require_once(__DIR__.'/lib/common.php');
 require_once(__DIR__.'/lib/visitors.php');
 require_once(__DIR__.'/lib/irc.php');
 
