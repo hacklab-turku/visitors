@@ -5,6 +5,12 @@ $dhcp_lease_secs = 300;
 $common_read_var = $db->prepare('SELECT value FROM state WHERE key=?');
 $common_update_var = $db->prepare('UPDATE state SET value=? WHERE key=?');
 
+// Register database connection killer
+register_shutdown_function (function() {
+    global $db;
+    $db->close();
+});
+
 function err($msg) {
     error_log($msg);
     exit(1);
