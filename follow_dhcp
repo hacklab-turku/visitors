@@ -2,6 +2,7 @@
 <?php
 require_once(__DIR__.'/lib/common.php');
 require_once(__DIR__.'/lib/irc.php');
+require_once(__DIR__.'/lib/visitor_merge.php');
 
 // Process data up to date (--oneshot) or follow log continuously (no args)
 if (count($argv) < 2) {
@@ -43,13 +44,17 @@ $find_leavers = $db->prepare("
 function leave_line(&$a) {
     $msg = "Hacklab on nyt tyhjä. Paikalla oli";
     $msg .= count($a) > 1 ? 'vat ' : ' ';
-    foreach ($a as $user) {
-        $msg .=
-            $user['nick'].' ('.
-            date('H:i', $user['enter']).
-            '–'.
-            date('H:i', $user['leave']).
-            '), ';
+    foreach ($a as $user => $visits) {
+        $msg .= "$user (";
+        foreach($visits as $visit) {
+            $msg .=
+                date('H:i', $visit['enter']).
+                '–'.
+                date('H:i', $visit['leave']).
+                ', ';
+        }
+        // Add closing brace before comma+space the hard way
+        $msg = substr($msg, 0, -2).'), ';
     }
     return substr($msg, 0, -2); // Remove comma+space
 }
@@ -93,7 +98,7 @@ while (true) {
         while (($data = $leavers_result->fetchArray(SQLITE3_ASSOC))) {
             array_push($a, $data);
         }
-        to_irc(leave_line($a));
+        to_irc(leave_line(merge_visits($a)));
 
         continue; // Start again
     }
