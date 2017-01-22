@@ -22,7 +22,7 @@ work with any system running *systemd*.
 Install requirements (as root):
 
 ```sh
-apt install php-cli php-sqlite3 php-zmq php-fpm nginx
+apt install php-cli php-sqlite3 php-fpm nginx
 ```
 
 Initialize database:

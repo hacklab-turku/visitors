@@ -1,19 +1,12 @@
 <?php
 
 // Connect to the message queue
-$zmq_context = new ZMQContext();
-$zmq_pub = new ZMQSocket($zmq_context, ZMQ::SOCKET_PUB);
-$zmq_pub->connect("tcp://127.0.0.1:61124");
-sleep(1); // Magic delay because the shitty bot is undocumented
+$irc_resource = fopen(getenv('HOME').'/ii/rajaniemi.freenode.net/in', 'w');
 
 function to_irc($msg) {
     // TODO make this not hardcoded
-    global $zmq_pub;
-    $zmq_pub->send(json_encode([
-        "target" => "#hacklab.jkl",
-        "command" => "PRIVMSG",
-        "from_channel" => true,
-        "connection" => "FreeNode",
-        "payload" => $msg,
-    ]));
+    global $irc_resource;
+    // FIXME msg escaping of newline, reading of return values etc.
+    fwrite($irc_resource, "/notice #hacklab.jkl :$msg\n");
+    fflush($irc_resource);
 }
