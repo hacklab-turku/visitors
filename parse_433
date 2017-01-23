@@ -1,0 +1,102 @@
+#!/usr/bin/env php
+<?php
+
+require_once(__DIR__.'/lib/common.php');
+require_once(__DIR__.'/lib/visitors.php');
+require_once(__DIR__.'/lib/irc.php');
+
+function club_evening_start() {
+    global $dhcp_lease_secs;
+    
+    // Search current visitors
+    $req = [
+        'lease' => $dhcp_lease_secs,
+        'now' => gettimeofday(true)
+    ];
+    $visits = get_visitors($req);
+
+    if (count($visits) === 0) {
+        $msg = "Joku painoi \"kerhoilta alkaa\"-painiketta. Kuka olet?";
+    } else {
+        $msg = "Kerhoilta alkoi, paikalla ";
+        $msg .= count($visits) > 1 ? 'ovat ' : 'on ';
+        foreach ($visits as $user) {
+            $msg .=
+                $user['nick'].' (saapui '.
+                date('H:i', $user['enter']).
+                '), ';
+        }
+        $msg = substr($msg, 0, -2); // Remove comma+space
+        $msg .= ". Tervetuloa!";
+    }
+    return $msg;
+}
+
+function set_state($new) {
+    global $state;
+    if ($state === $new) {
+        // Don't report multiple times the same
+        return;
+    }
+
+    // TODO Replace this ugly if-elseif with SOMETHING!
+    if ($new === 'rtl_error') {
+        $msg = 'Softaradio meni sekaisin. Voisiko joku ottaa sen mustan tikun irti reitittimestä?';
+    } else if ($new['chan'] === 0 && $new['button'] === 0 && $new['state'] === TRUE) {
+        $msg = 'Hacklabin valot syttyivät!';
+    } else if ($new['chan'] === 0 && $new['button'] === 0 && $new['state'] === FALSE) {
+        $msg = 'Hacklabin valot sammuivat!';
+    } else if ($new['chan'] === 0 && $new['button'] === 2 && $new['state'] === TRUE) {
+        $msg = 'Icchan^ selittää kovasti jostakin. :-)';
+    } else if ($new['chan'] === 0 && $new['button'] === 3 && $new['state'] === TRUE) {
+        $msg = club_evening_start();
+    } else if ($new['chan'] === 0 && $new['button'] === 3 && $new['state'] === FALSE) {
+        $msg = "Labilta ollaan tekemässä lähtöä...";
+    } else {
+        $msg = NULL;
+    }
+
+    if ($msg !== NULL) {
+        $state = $new;
+        to_irc($msg);
+    }
+}
+
+$pipe = popen("journalctl -n0 -ocat -fu rtl_433", "r");
+$state = NULL;
+
+while (true) {
+    $line = fgets($pipe);
+    if ($line === FALSE) {
+        // EOF
+        break;
+    }
+
+    // Detect rtl_sdr failure
+    if (strpos($line, 'rtlsdr_demod_write_reg failed') === 0) {
+        set_state("rtl_error");
+        continue;
+    }
+    
+    $o = json_decode($line);
+    if ($o === NULL) {
+        // Skip garbage
+        continue;
+    }
+
+    if ($o->model !== 'Generic Remote') {
+        // Not interesting device
+        continue;
+    }
+
+    if ($o->tristate[11] === '1') {
+        // Button release, not interested
+        continue;
+    }
+    
+    set_state(array(
+        'chan' => strpos($o->tristate, '0'),
+        'button' => strpos($o->tristate, '0', 4)-4,
+        'state' => $o->tristate[11] === 'F',
+    ));
+}
