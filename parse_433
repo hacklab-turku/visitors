@@ -41,7 +41,9 @@ function set_state($new) {
 
     // TODO Replace this ugly if-elseif with SOMETHING!
     if ($new === 'rtl_error') {
-        $msg = 'Softaradio meni sekaisin. Voisiko joku ottaa sen mustan tikun irti reitittimestä?';
+        $msg = 'Softaradio meni sekaisin. :-/ Voisiko joku ottaa sen mustan tikun irti reitittimestä ja laittaa takaisin?';
+    } else if ($new === 'rtl_ok') {
+        $msg = 'Kiitos, softaradio toimii taas. <3';
     } else if ($new['chan'] === 0 && $new['button'] === 0 && $new['state'] === TRUE) {
         $msg = 'Hacklabin valot syttyivät!';
     } else if ($new['chan'] === 0 && $new['button'] === 0 && $new['state'] === FALSE) {
@@ -72,9 +74,13 @@ while (true) {
         break;
     }
 
-    // Detect rtl_sdr failure
+    // Detect rtl_sdr failure and when it gets sane
     if (strpos($line, 'rtlsdr_demod_write_reg failed') === 0) {
         set_state("rtl_error");
+        continue;
+    }
+    if (strpos($line, 'Using device ') === 0) {
+        set_state("rtl_ok");
         continue;
     }
     
