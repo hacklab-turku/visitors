@@ -46,8 +46,10 @@ function set_state($new) {
         $msg = 'Kiitos, softaradio toimii taas. <3';
     } else if ($new['chan'] === 0 && $new['button'] === 0 && $new['state'] === TRUE) {
         $msg = 'Hacklabin valot syttyivät!';
+        exec('sudo systemctl start qra');
     } else if ($new['chan'] === 0 && $new['button'] === 0 && $new['state'] === FALSE) {
         $msg = 'Hacklabin valot sammuivat!';
+        exec('sudo systemctl stop qra');
     } else if ($new['chan'] === 0 && $new['button'] === 2 && $new['state'] === TRUE) {
         $msg = 'Icchan^ selittää kovasti jostakin. :-)';
     } else if ($new['chan'] === 0 && $new['button'] === 3 && $new['state'] === TRUE) {

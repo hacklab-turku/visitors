@@ -1,0 +1,13 @@
+#!/bin/sh -eu
+cd "`dirname "$0"`"
+{
+    # Sleep a bit to avoid notifying too early
+    sleep 15
+    # Poll visitor and if none, retry after 10 seconds
+    while ./is_empty; do
+	echo 'QRA?'
+	sleep 10
+    done
+    # User found. Thanks!
+    echo '%T1000%W25TU'
+} | sudo cw -s console
