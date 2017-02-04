@@ -1,0 +1,13 @@
+#!/usr/bin/env php
+<?php
+require_once(__DIR__.'/lib/common.php');
+require_once(__DIR__.'/lib/visitors.php');
+
+// Exit code is 0 if lab is empty, 10 otherwise
+
+$visits = get_visitors([
+    'lease' => $dhcp_lease_secs,
+    'now' => gettimeofday(true)
+]);
+
+exit(!empty($visits));
