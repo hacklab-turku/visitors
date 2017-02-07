@@ -86,10 +86,22 @@ while (true) {
         if ($is_empty->v) {
             to_irc("Ensimmäisenä saapui ".$last_visitor['nick']);
         }
+
+        // Log
+        print(json_encode([
+            'empty' => FALSE,
+            'enter' => $last_visitor['nick'],
+        ])."\n");
     }
     $is_empty->set($delay === NULL);
 
     if (!is_data_available($pipe, $delay)) {
+        // Log
+        print(json_encode([
+            'empty' => TRUE,
+            'prev_id' => $last_leave->v,
+        ])."\n");
+
         // No new data available. User has left. Set the empty state
         $last_leave->set($last_visitor['leave']);
 
