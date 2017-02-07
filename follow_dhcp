@@ -41,7 +41,7 @@ $find_leavers = $db->prepare("
 	ORDER BY leave DESC
 ");
 
-function leave_line(&$a) {
+function leave_line($a) {
     $msg = "Hacklab on nyt tyhjä. Paikalla oli";
     $msg .= count($a) > 1 ? 'vat ' : ' ';
     foreach ($a as $user => $visits) {
