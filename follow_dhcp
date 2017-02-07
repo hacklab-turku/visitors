@@ -62,7 +62,7 @@ function leave_line(&$a) {
 // Data source
 $after = $cursor->v === NULL ? '' : "'--after-cursor=".$cursor->v."'";
 $follow_arg = $follow ? '-f' : '';
-$pipe = popen("journalctl -n all -u dnsmasq -o export $after $follow_arg", "r");
+$pipe = popen("exec journalctl -n all -u dnsmasq -o export $after $follow_arg", "r");
 
 if (!$follow) $db->exec('BEGIN');
 
