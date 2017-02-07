@@ -85,13 +85,13 @@ while (true) {
         // report it.
         if ($is_empty->v) {
             to_irc("Ensimmäisenä saapui ".$last_visitor['nick']);
-        }
 
-        // Log
-        print(json_encode([
-            'empty' => FALSE,
-            'enter' => $last_visitor['nick'],
-        ])."\n");
+            // Log
+            print(json_encode([
+                'empty' => FALSE,
+                'enter' => $last_visitor['nick'],
+            ])."\n");
+        }
     }
     $is_empty->set($delay === NULL);
 
