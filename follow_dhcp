@@ -1,19 +1,21 @@
 #!/usr/bin/env php
 <?php
-require_once(__DIR__.'/lib/common.php');
-require_once(__DIR__.'/lib/irc.php');
-require_once(__DIR__.'/lib/lang.php');
-require_once(__DIR__.'/lib/visitor_merge.php');
-
 // Parse command line arguments
 $options = getopt('od', [
+    'database:',
     'debug',
-    'oneshot'
+    'oneshot',
+    'test',
 ]);
 
 // Process data up to date (--oneshot) or follow log continuously (no arg)
 $follow = !array_key_exists('oneshot', $options) && !array_key_exists('o', $options);
 $debug = array_key_exists('debug', $options) || array_key_exists('d', $options);
+
+require_once(__DIR__.'/lib/common.php');
+require_once(__DIR__.'/lib/irc.php');
+require_once(__DIR__.'/lib/lang.php');
+require_once(__DIR__.'/lib/visitor_merge.php');
 if ($debug) print_r($GLOBALS);
 
 // Database
@@ -48,6 +50,11 @@ $find_leavers = $db->prepare("
 $after = $cursor->v === NULL ? '' : "'--after-cursor=".$cursor->v."'";
 $follow_arg = $follow ? '-f' : '';
 $pipe = popen("exec journalctl -n all -u dnsmasq -o json $after $follow_arg", "r");
+
+if (array_key_exists('test', $options)) {
+    print("Test mode, stopping\n");
+    exit(0);
+}
 
 if (!$follow) $db->exec('BEGIN');
 

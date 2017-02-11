@@ -1,5 +1,6 @@
 <?php
-$db = new SQLite3(__DIR__.'/../db/db.sqlite');
+$dbfile = @$options['database'] ?: __DIR__.'/../db/db.sqlite';
+$db = new SQLite3($dbfile);
 $db->busyTimeout(2000);
 $db->exec('PRAGMA journal_mode = wal');
 $dhcp_lease_secs = 300;
