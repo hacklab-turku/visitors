@@ -5,12 +5,15 @@ require_once(__DIR__.'/lib/irc.php');
 require_once(__DIR__.'/lib/visitor_merge.php');
 
 // Parse command line arguments
-$options = getopt('o', [
+$options = getopt('od', [
+    'debug',
     'oneshot'
 ]);
 
 // Process data up to date (--oneshot) or follow log continuously (no arg)
-$follow = !array_key_exists('oneshot', $options);
+$follow = !array_key_exists('oneshot', $options) && !array_key_exists('o', $options);
+$debug = array_key_exists('debug', $options) || array_key_exists('d', $options);
+if ($debug) print_r($GLOBALS);
 
 // Database
 $cursor = new SqlVar('cursor');
@@ -139,6 +142,7 @@ while (true) {
             'ip' => $matches[1],
             'host' => $matches[3],
         ];
+        if ($debug) var_dump($data);
         if ($follow) $db->exec('BEGIN');
 
         // Try to update visit first if possible, otherwise insert new.
