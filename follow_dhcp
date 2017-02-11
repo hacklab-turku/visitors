@@ -61,7 +61,7 @@ function leave_line($a) {
 // Data source
 $after = $cursor->v === NULL ? '' : "'--after-cursor=".$cursor->v."'";
 $follow_arg = $follow ? '-f' : '';
-$pipe = popen("exec journalctl -n all -u dnsmasq -o export $after $follow_arg", "r");
+$pipe = popen("exec journalctl -n all -u dnsmasq -o json $after $follow_arg", "r");
 
 if (!$follow) $db->exec('BEGIN');
 
@@ -115,46 +115,30 @@ while (true) {
     }
 
     // Parse journalctl entry to an associative array $vars
-    $vars = [];
-    while (true) {
-        $line = fgets($pipe);
-        if ($line === FALSE) {
-            // It's over.
-            break 2;
-        } else if ($line === "\n") {
-            break;
-        } else {
-            // Split the string and put to the storage
-            $pos = strpos($line, '=');
-            $vars[substr($line, 0, $pos)] = substr($line, $pos+1, strlen($line)-$pos-2);
-        }
+    $line = fgets($pipe);
+    if ($line === FALSE) {
+        // Stop if EOF
+        break;
     }
-
-    // Entry must contain cursor, timestamp, and message. If not, then
-    // it's better to give up 'cause we have received garbage.
-    if (
-        !array_key_exists('MESSAGE', $vars) ||
-        !array_key_exists('__CURSOR', $vars) ||
-        !array_key_exists('__REALTIME_TIMESTAMP', $vars)
-    ) {
+    $vars = json_decode($line);
+    if ($vars === NULL) {
         print("Panic: Not systemd log export format\n");
         exit(1);
     }
     
     // Extract payload
-    preg_match('/^[^ ]* DHCPACK[^ ]* ([^ ]*) ([^ ]*) ?(.*)/', $vars['MESSAGE'], $matches);
+    preg_match('/^[^ ]* DHCPACK[^ ]* ([^ ]*) ([^ ]*) ?(.*)/', $vars->MESSAGE, $matches);
 
     // Transaction takes place until cursor update. If the script dies
     // while processing, it doesn't skip anything.
     if (!empty($matches)) {
         // We have a payload. Populate all data and execute SQL
         $data = [
-            'now' => floor($vars['__REALTIME_TIMESTAMP'] / 1000000), // seconds
+            'now' => floor($vars->__REALTIME_TIMESTAMP / 1000000), // seconds
             'mac' => strtoupper(str_replace(':', '', $matches[2])), // uppercase mac with no colons
             'ip' => $matches[1],
             'host' => $matches[3],
         ];
-
         if ($follow) $db->exec('BEGIN');
 
         // Try to update visit first if possible, otherwise insert new.
@@ -164,7 +148,7 @@ while (true) {
         }
 
         // Store current journal cursor position
-        $cursor->set($vars['__CURSOR']);
+        $cursor->set($vars->__CURSOR);
 
         if ($follow) $db->exec('END');
     }
