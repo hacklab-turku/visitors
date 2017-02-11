@@ -2,6 +2,7 @@
 <?php
 require_once(__DIR__.'/lib/common.php');
 require_once(__DIR__.'/lib/irc.php');
+require_once(__DIR__.'/lib/lang.php');
 require_once(__DIR__.'/lib/visitor_merge.php');
 
 // Parse command line arguments
@@ -43,24 +44,6 @@ $find_leavers = $db->prepare("
 	ORDER BY leave DESC
 ");
 
-function leave_line($a) {
-    $msg = "Hacklab on nyt tyhjä. Paikalla oli";
-    $msg .= count($a) > 1 ? 'vat ' : ' ';
-    foreach ($a as $user => $visits) {
-        $msg .= "$user (";
-        foreach($visits as $visit) {
-            $msg .=
-                date('H:i', $visit['enter']).
-                '–'.
-                date('H:i', $visit['leave']).
-                ', ';
-        }
-        // Add closing brace before comma+space the hard way
-        $msg = substr($msg, 0, -2).'), ';
-    }
-    return substr($msg, 0, -2); // Remove comma+space
-}
-
 // Data source
 $after = $cursor->v === NULL ? '' : "'--after-cursor=".$cursor->v."'";
 $follow_arg = $follow ? '-f' : '';
@@ -86,7 +69,7 @@ while (true) {
         // There is something to wait for. If this is the first time,
         // report it.
         if ($is_empty->v) {
-            to_irc("Ensimmäisenä saapui ".$last_visitor['nick']);
+            to_irc(join_line($last_visitor));
 
             // Log
             print(json_encode([
