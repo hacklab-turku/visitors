@@ -4,14 +4,13 @@ require_once(__DIR__.'/lib/common.php');
 require_once(__DIR__.'/lib/irc.php');
 require_once(__DIR__.'/lib/visitor_merge.php');
 
-// Process data up to date (--oneshot) or follow log continuously (no args)
-if (count($argv) < 2) {
-    $follow = TRUE;
-} else if ($argv[1] === "--oneshot") {
-    $follow = FALSE;
-} else {
-    err("Invalid arguments");
-}
+// Parse command line arguments
+$options = getopt('o', [
+    'oneshot'
+]);
+
+// Process data up to date (--oneshot) or follow log continuously (no arg)
+$follow = !array_key_exists('oneshot', $options);
 
 // Database
 $cursor = new SqlVar('cursor');
