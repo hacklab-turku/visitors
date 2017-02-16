@@ -50,7 +50,7 @@ $find_users = $db->prepare("
 $after = $cursor->get() === NULL ? '' : "'--after-cursor=".$cursor->get()."'";
 $follow_arg = $follow ? '-f' : '';
 $pipe = popen("exec journalctl -n all -u dnsmasq -o json $after $follow_arg", "r");
-$min_leave = INF; // First we don't know, must wait for data forever
+$min_leave = time(); // First we don't know, play sure and wait whole lease time.
 if (array_key_exists('test', $options)) {
     print("Test mode, stopping\n");
     exit(0);
@@ -68,9 +68,10 @@ while (true) {
         if (!is_data_available($pipe, $delay)) {
             // First possible leaver timeout reached without getting
             // new data. Time to analyze the results.
+            $last_event = time();
             break;
         }
-            
+
         // Data is available. Parse journalctl entry.
         $line = fgets($pipe);
         if ($line === FALSE) {
@@ -113,6 +114,7 @@ while (true) {
         $cursor->set($vars->__CURSOR);
 
         if ($follow) $db->exec('END');
+        $last_event = $data['now']; // Use logbook date because we know it
         break; // Got new possibly relevant data, analyze it.
     }
 
@@ -120,7 +122,7 @@ while (true) {
     // and get list of persons on board.
     $users_result = db_execute($find_users, [$data['now'] - $dhcp_lease_secs]);
     $new_state = [
-        'ts' => $data['now'],
+        'ts' => $last_event,
         'ids' => [],
         'occupied' => $state->get()['occupied'],
     ];
