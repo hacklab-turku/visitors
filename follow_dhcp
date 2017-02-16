@@ -68,7 +68,6 @@ while (true) {
         if (!is_data_available($pipe, $delay)) {
             // First possible leaver timeout reached without getting
             // new data. Time to analyze the results.
-            $last_event = time();
             break;
         }
 
@@ -114,7 +113,6 @@ while (true) {
         $cursor->set($vars->__CURSOR);
 
         if ($follow) $db->exec('END');
-        $last_event = $data['now']; // Use logbook date because we know it
         break; // Got new possibly relevant data, analyze it.
     }
 
@@ -122,11 +120,11 @@ while (true) {
     // and get list of persons on board.
     $users_result = db_execute($find_users, [$data['now'] - $dhcp_lease_secs]);
     $new_state = [
-        'ts' => $last_event,
         'ids' => [],
         'occupied' => $state->get()['occupied'],
     ];
 
+    $old_min_leave = $min_leave;
     $min_leave = INF;
     while (($row = $users_result->fetchArray(SQLITE3_ASSOC))) {
         // Grab them by the first leaver time
@@ -139,6 +137,11 @@ while (true) {
         if ($state->get()['ids'] === []) {
             $new_state['occupied'] = $min_leave;
         }
+
+        // Try to find suitable timing source
+        $new_state['ts'] = count($state->get()['ids']) < count($new_state['ids']) ?
+            $data['now']: // Newcomer, use event data
+            $old_min_leave + $dhcp_lease_secs; // We lost a visitor, use estimate
 
         $state->set($new_state);
         print($state->getRaw()."\n");
