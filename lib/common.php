@@ -41,7 +41,8 @@ function db_execute(&$stmt, $values = [], $error = "Database error") {
 }
 
 // Wait data from a stream for a given number of seconds (floats
-// accepted). If time elapses, return FALSE, otherwise TRUE.
+// accepted). If time elapses, return FALSE, otherwise TRUE. If you
+// want to wait infinitely, set $secs to NULL or INF.
 function is_data_available($fd, $secs) {
     // Prepare fd lists
     $fd_read = [$fd];
@@ -49,7 +50,7 @@ function is_data_available($fd, $secs) {
     $fd_ex = NULL;
 
     // Prepare time
-    if ($secs === NULL) {
+    if ($secs === NULL || $secs === INF) {
         $tv_sec = NULL;
         $tv_usec = NULL;
     } else {
