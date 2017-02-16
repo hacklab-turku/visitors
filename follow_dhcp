@@ -13,15 +13,15 @@ $follow = !array_key_exists('oneshot', $options) && !array_key_exists('o', $opti
 $debug = array_key_exists('debug', $options) || array_key_exists('d', $options);
 
 require_once(__DIR__.'/lib/common.php');
-require_once(__DIR__.'/lib/irc.php');
-require_once(__DIR__.'/lib/lang.php');
-require_once(__DIR__.'/lib/visitor_merge.php');
 if ($debug) print_r($GLOBALS);
 
 // Database
-$cursor = new SqlVar('cursor');
-$last_leave = new SqlVar('last_leave');
-$is_empty = new SqlVar('is_empty');
+$cursor = new SqlVar('dnsmasq_cursor', NULL);
+$state = new SqlVar('visitor_state', [
+    'ids' => [],
+    'occupied' => 0,
+]);
+
 $add_visit = $db->prepare("
     INSERT INTO visit (mac, enter, leave, ip, hostname)
     VALUES (:mac,:now,:now,:ip,:host)
@@ -32,8 +32,8 @@ $update_visit = $db->prepare("
     WHERE leave>:now-:lease AND mac=:mac
 ");
 $update_visit->bindValue('lease',$dhcp_lease_secs);
-$find_leavers = $db->prepare("
-	SELECT nick,enter,leave
+$find_users = $db->prepare("
+	SELECT id, min(leave) AS leave
 	FROM visit v
 	JOIN user_mac m ON (SELECT rowid
 	                    FROM user_mac
@@ -41,16 +41,16 @@ $find_leavers = $db->prepare("
 	                    ORDER BY changed DESC
 	                    LIMIT 1
 	                   )=m.rowid
-	JOIN user u ON m.id=u.id
-	WHERE leave > ?
-	ORDER BY leave DESC
+	WHERE leave > ? AND id IS NOT NULL
+	GROUP BY id
+	ORDER BY id ASC
 ");
 
 // Data source
-$after = $cursor->v === NULL ? '' : "'--after-cursor=".$cursor->v."'";
+$after = $cursor->get() === NULL ? '' : "'--after-cursor=".$cursor->get()."'";
 $follow_arg = $follow ? '-f' : '';
 $pipe = popen("exec journalctl -n all -u dnsmasq -o json $after $follow_arg", "r");
-
+$min_leave = INF; // First we don't know, must wait for data forever
 if (array_key_exists('test', $options)) {
     print("Test mode, stopping\n");
     exit(0);
@@ -59,73 +59,38 @@ if (array_key_exists('test', $options)) {
 if (!$follow) $db->exec('BEGIN');
 
 while (true) {
-    // Calculate next potential leave time and wait until that to
-    // decide if it the last person has left the premises.
-    $leavers_result = db_execute($find_leavers, [$last_leave->v]);
-    $last_visitor = $leavers_result->fetchArray(SQLITE3_ASSOC);
+    // Wait for fresh data at most to next leaver deadline. If running
+    // in one-shot mode, wait forever.
+    while (true) {
+        $delay = $follow ? max(0, $min_leave + $dhcp_lease_secs - time()) : INF;
+        if ($debug) print("Waiting for data ".($delay === INF ? 'forever' : $delay.'s') ."...\n");
 
-    // Deciding how long to wait
-    if ( $last_visitor === FALSE ) {
-        // Already reported or no data yet. Wait infinitely.
-        $delay = NULL;
-    } else {
-        // Calculate waiting timeout. Always wait for new data for at
-        // least a second (helps if processing historical data)
-        $delay = max(1, $last_visitor['leave'] + $dhcp_lease_secs - time());
-
-        // There is something to wait for. If this is the first time,
-        // report it.
-        if ($is_empty->v) {
-            to_irc(join_line($last_visitor));
-
-            // Log
-            print(json_encode([
-                'empty' => FALSE,
-                'enter' => $last_visitor['nick'],
-            ])."\n");
+        if (!is_data_available($pipe, $delay)) {
+            // First possible leaver timeout reached without getting
+            // new data. Time to analyze the results.
+            break;
         }
-    }
-    $is_empty->set($delay === NULL);
-
-    if (!is_data_available($pipe, $delay)) {
-        // Log
-        print(json_encode([
-            'empty' => TRUE,
-            'prev_id' => $last_leave->v,
-        ])."\n");
-
-        // No new data available. User has left. Set the empty state
-        $last_leave->set($last_visitor['leave']);
-
-        // Construct visitor list since last leave and send it to IRC.
-        $a = [$last_visitor];
-        while (($data = $leavers_result->fetchArray(SQLITE3_ASSOC))) {
-            array_push($a, $data);
+            
+        // Data is available. Parse journalctl entry.
+        $line = fgets($pipe);
+        if ($line === FALSE) {
+            // Stop if EOF
+            break 2;
         }
-        to_irc(leave_line(merge_visits($a)));
-
-        continue; // Start again
-    }
-
-    // Parse journalctl entry to an associative array $vars
-    $line = fgets($pipe);
-    if ($line === FALSE) {
-        // Stop if EOF
-        break;
-    }
-    $vars = json_decode($line);
-    if ($vars === NULL) {
-        print("Panic: Not systemd log export format\n");
-        exit(1);
-    }
+        $vars = json_decode($line);
+        if ($vars === NULL) {
+            print("Panic: Not systemd log export format\n");
+            exit(1);
+        }
     
-    // Extract payload
-    preg_match('/^[^ ]* DHCPACK[^ ]* ([^ ]*) ([^ ]*) ?(.*)/', $vars->MESSAGE, $matches);
-
-    // Transaction takes place until cursor update. If the script dies
-    // while processing, it doesn't skip anything.
-    if (!empty($matches)) {
-        // We have a payload. Populate all data and execute SQL
+        // Extract payload, if any.
+        preg_match('/^[^ ]* DHCPACK[^ ]* ([^ ]*) ([^ ]*) ?(.*)/', $vars->MESSAGE, $matches);
+        if (empty($matches)) {
+            // This line is not interesting. Go get new
+            continue;
+        }
+        
+        // Populate all data and execute SQL
         $data = [
             'now' => floor($vars->__REALTIME_TIMESTAMP / 1000000), // seconds
             'mac' => strtoupper(str_replace(':', '', $matches[2])), // uppercase mac with no colons
@@ -133,8 +98,11 @@ while (true) {
             'host' => $matches[3],
         ];
         if ($debug) var_dump($data);
-        if ($follow) $db->exec('BEGIN');
 
+        // Transaction starts here and lasts until cursor update. If
+        // the script dies in a transaction, it can be safely restarted.
+        if ($follow) $db->exec('BEGIN');
+            
         // Try to update visit first if possible, otherwise insert new.
         db_execute($update_visit, $data);
         if ($db->changes() === 0) {
@@ -145,6 +113,35 @@ while (true) {
         $cursor->set($vars->__CURSOR);
 
         if ($follow) $db->exec('END');
+        break; // Got new possibly relevant data, analyze it.
+    }
+
+    // Analyzing if anything changed. Get next potential leave time
+    // and get list of persons on board.
+    $users_result = db_execute($find_users, [$data['now'] - $dhcp_lease_secs]);
+    $new_state = [
+        'ts' => $data['now'],
+        'ids' => [],
+        'occupied' => $state->get()['occupied'],
+    ];
+
+    $min_leave = INF;
+    while (($row = $users_result->fetchArray(SQLITE3_ASSOC))) {
+        // Grab them by the first leaver time
+        $min_leave = min($min_leave, $row['leave']);
+        array_push($new_state['ids'], $row['id']);
+    }
+
+    if ($state->get()['ids'] !== $new_state['ids']) {
+        // Users changed. If it was previously empty, update time.
+        if ($state->get()['ids'] === []) {
+            $new_state['occupied'] = $min_leave;
+        }
+
+        $state->set($new_state);
+        print($state->getRaw()."\n");
+    } else {
+        if ($debug) print("Checked data but no changes\n");
     }
 }
 
