@@ -24,67 +24,8 @@ $find_leavers = $db->prepare("
 ");
 $find_user_by_id = $db->prepare("SELECT * from user WHERE id=?");
 
-function set_state($new) {
-    global $lang;
-    static $state;
-    if ($state === $new) {
-        // Don't report multiple times the same
-        return;
-    }
-    $e = is_array($new) ? (object)$new : $new; // Hack because object comparison doesn't work.
-
-    // TODO Replace this ugly if-elseif with SOMETHING!
-    if ($e === 'rtl_error') {
-        $msg = 'Softaradio meni sekaisin. :-/ Voisiko joku ottaa sen mustan tikun irti reitittimestä ja laittaa takaisin?';
-    } else if ($e === 'rtl_ok') {
-        $msg = 'Kiitos, softaradio toimii taas. <3';
-    } else if ($e->chan === 0 && $e->button === 0 && $e->state) {
-        $msg = 'Hacklabin valot syttyivät!';
-        exec('sudo systemctl start qra');
-    } else if ($e->chan === 0 && $e->button === 0 && !$e->state) {
-        $msg = 'Hacklabin valot sammuivat!';
-        exec('sudo systemctl stop qra');
-    } else if ($e->chan === 0 && $e->button === 2 && $e->state) {
-        $msg = 'Icchan^ selittää kovasti jostakin. :-)';
-    } else if ($e->chan === 0 && $e->button === 3 && $e->state) {
-        global $dhcp_lease_secs;
-        
-        // Search current visitors
-        $req = [
-            'lease' => $dhcp_lease_secs,
-            'now' => time(),
-        ];
-        $msg = $lang::evening_start(get_visitors($req));
-    } else if ($e->chan === 0 && $e->button === 3 && !$e->state) {
-        $msg = "Labilta ollaan tekemässä lähtöä...";
-    } else {
-        return; // No match, no reporting
-    }
-    
-    $state = $new;
-    to_irc($msg);
-}
-
-function parse_433($e) {
-    if (gettype($e->MESSAGE) === "string") {
-        if (strpos($e->MESSAGE, 'rtlsdr_demod_write_reg failed') === 0) return "rtl_error";
-        if (strpos($e->MESSAGE, 'Using device ') === 0) return "rtl_ok";
-        return NULL;
-    } else {
-        // Not remote
-        if ($e->MESSAGE->model !== 'Generic Remote') return NULL;
-        // Button release
-        if ($e->MESSAGE->tristate[11] === '1') return NULL;
-    
-        return [
-            'chan' => strpos($e->MESSAGE->tristate, '0'),
-            'button' => strpos($e->MESSAGE->tristate, '0', 4)-4,
-            'state' => $e->MESSAGE->tristate[11] === 'F',
-        ];
-    }
-}
-
 $pipe = popen("exec journalctl -n0 -ojson -f -u visitors -u rtl_433", "r");
+$rtl_433_state = NULL;
 
 while (true) {
     $raw = fgets($pipe);
@@ -92,34 +33,83 @@ while (true) {
         // EOF
         break;
     }
-    $entry = json_decode($raw);
-    if ($entry === NULL) {
+    $e = json_decode($raw);
+    if ($e === NULL) {
         print("Panic: Not systemd log export format\n");
         exit(1);
     }
 
     // Try decoding the message as well.
-    $x = json_decode($entry->MESSAGE);
-    if ($x !== NULL) {
-        $entry->MESSAGE = $x;
-    }
+    $e->json = json_decode($e->MESSAGE);
     
-    switch ($entry->_SYSTEMD_UNIT) {
+    switch ($e->_SYSTEMD_UNIT) {
     case 'rtl_433.service':
-        $res = parse_433($entry);
-        if ($res === NULL) continue;
-        set_state($res);
-        break;
-    case 'visitors.service':
-        var_dump($entry);
-        if (gettype($entry->MESSAGE) !== "object") {
-            // Garbage
-            continue;
-        }
+        // Radio controlled buttons parsed by rtl_433
 
-        if ($entry->MESSAGE->ids === []) {
+        $msg = NULL;
+        // Remove timestamps to identify duplicates
+        if ($e->json !== NULL) $e->json->time = NULL;
+        // Name some common RTL error cases
+        if (strpos($e->MESSAGE, 'rtlsdr_demod_write_reg failed') === 0) $e->json = "rtl_error";
+        if (strpos($e->MESSAGE, 'Using device ') === 0) $e->json = "rtl_ok";
+        // Ignore garbage
+        if ($e->json === NULL) break;
+
+        // If the same state than earlier, don't care
+        if ($rtl_433_state === (array)$e->json) break;
+
+        // Now forming the IRC message
+        if ($e->json === 'rtl_error') {
+            $msg = 'Softaradio meni sekaisin. :-/ Voisiko joku ottaa sen mustan tikun irti reitittimestä ja laittaa takaisin?';
+        } else if ($e->json === 'rtl_ok') {
+            $msg = 'Kiitos, softaradio toimii taas. <3';
+        } else if ($e->json->model === 'Generic Remote') {
+            // Parse 433 MHz remote bit patterns
+            $released = $e->json->tristate[11] === '1';
+            $chan = strpos($e->json->tristate, '0');
+            $button = strpos($e->json->tristate, '0', 4)-4;
+            $pressed = $e->json->tristate[11] === 'F';
+
+            // Skip if not our remote and if button is released.
+            if ($released || $chan !== 0) break;
+
+            // Now parsing the events for buttons
+            if ($button === 0 && $pressed) {
+                $msg = 'Hacklabin valot syttyivät!';
+                exec('sudo systemctl start qra');
+            } else if ($button === 0 && !$pressed) {
+                $msg = 'Hacklabin valot sammuivat!';
+                exec('sudo systemctl stop qra');
+            } else if ($button === 2 && $pressed) {
+                $msg = 'Nyt on eeppistä settiä! :-O';
+            } else if ($button === 3 && $pressed) {
+                global $dhcp_lease_secs;
+                // Search current visitors
+                $req = [
+                    'lease' => $dhcp_lease_secs,
+                    'now' => time(),
+                ];
+                $msg = $lang::evening_start(get_visitors($req));
+            } else if ($button === 3 && !$pressed) {
+                $msg = "Labilta ollaan tekemässä lähtöä...";
+            } else break;
+        } else if ($e->json->model === 'Generic temperature sensor 1' && $e->json->id === 0 && $e->json->temperature_C == 0.000) {
+            $msg = 'Ding! Dong!';
+        } else break;
+
+        // Now we are happy with parsing, write to IRC and update state.
+        $rtl_433_state = (array)$e->json;
+        if ($msg !== NULL) to_irc($msg);
+        break;   
+    case 'visitors.service':
+        // Visitors via DHCP parsed by follow_dhcp.
+        
+        // Skip if not containing JSON payload
+        if ($e->json === NULL) break;
+
+        if ($e->json->ids === []) {
             // Lab is now empty
-            $leavers_result = db_execute($find_leavers, [$entry->MESSAGE->occupied]);
+            $leavers_result = db_execute($find_leavers, [$e->json->occupied]);
             $a = [];
             while (($row = $leavers_result->fetchArray(SQLITE3_ASSOC))) {
                 array_push($a, $row);
@@ -127,9 +117,9 @@ while (true) {
             to_irc($lang::leave_line(merge_visits($a)));
         }
 
-        if ($entry->MESSAGE->occupied === $entry->MESSAGE->ts) {
+        if ($e->json->occupied === $e->json->ts) {
             // Lab got first visitor
-            $user = db_execute($find_user_by_id, [$entry->MESSAGE->ids[0]])->fetchArray(SQLITE3_ASSOC);
+            $user = db_execute($find_user_by_id, [$e->json->ids[0]])->fetchArray(SQLITE3_ASSOC);
             to_irc($lang::join_line($user));
         }
         break;
