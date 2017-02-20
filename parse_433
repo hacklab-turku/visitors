@@ -38,32 +38,31 @@ function set_state($new) {
         // Don't report multiple times the same
         return;
     }
+    $e = is_array($new) ? (object)$new : $new; // Hack because object comparison doesn't work.
 
     // TODO Replace this ugly if-elseif with SOMETHING!
-    if ($new === 'rtl_error') {
+    if ($e === 'rtl_error') {
         $msg = 'Softaradio meni sekaisin. :-/ Voisiko joku ottaa sen mustan tikun irti reitittimestä ja laittaa takaisin?';
-    } else if ($new === 'rtl_ok') {
+    } else if ($e === 'rtl_ok') {
         $msg = 'Kiitos, softaradio toimii taas. <3';
-    } else if ($new->chan === 0 && $new->button === 0 && $new->state) {
+    } else if ($e->chan === 0 && $e->button === 0 && $e->state) {
         $msg = 'Hacklabin valot syttyivät!';
         exec('sudo systemctl start qra');
-    } else if ($new->chan === 0 && $new->button === 0 && !$new->state) {
+    } else if ($e->chan === 0 && $e->button === 0 && !$e->state) {
         $msg = 'Hacklabin valot sammuivat!';
         exec('sudo systemctl stop qra');
-    } else if ($new->chan === 0 && $new->button === 2 && $new->state) {
+    } else if ($e->chan === 0 && $e->button === 2 && $e->state) {
         $msg = 'Icchan^ selittää kovasti jostakin. :-)';
-    } else if ($new->chan === 0 && $new->button === 3 && $new->state) {
+    } else if ($e->chan === 0 && $e->button === 3 && $e->state) {
         $msg = club_evening_start();
-    } else if ($new->chan === 0 && $new->button === 3 && !$new->state) {
+    } else if ($e->chan === 0 && $e->button === 3 && !$e->state) {
         $msg = "Labilta ollaan tekemässä lähtöä...";
     } else {
         return; // No match, no reporting
     }
 
-    if ($msg !== NULL) {
-        $state = $new;
-        to_irc($msg);
-    }
+    $state = $new;
+    to_irc($msg);
 }
 
 $pipe = popen("journalctl -n0 -ocat -fu rtl_433", "r");
@@ -102,7 +101,7 @@ while (true) {
         continue;
     }
     
-    set_state((object)[
+    set_state([
         'chan' => strpos($o->tristate, '0'),
         'button' => strpos($o->tristate, '0', 4)-4,
         'state' => $o->tristate[11] === 'F',
