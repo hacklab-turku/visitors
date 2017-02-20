@@ -44,20 +44,20 @@ function set_state($new) {
         $msg = 'Softaradio meni sekaisin. :-/ Voisiko joku ottaa sen mustan tikun irti reitittimestä ja laittaa takaisin?';
     } else if ($new === 'rtl_ok') {
         $msg = 'Kiitos, softaradio toimii taas. <3';
-    } else if ($new['chan'] === 0 && $new['button'] === 0 && $new['state'] === TRUE) {
+    } else if ($new->chan === 0 && $new->button === 0 && $new->state) {
         $msg = 'Hacklabin valot syttyivät!';
         exec('sudo systemctl start qra');
-    } else if ($new['chan'] === 0 && $new['button'] === 0 && $new['state'] === FALSE) {
+    } else if ($new->chan === 0 && $new->button === 0 && !$new->state) {
         $msg = 'Hacklabin valot sammuivat!';
         exec('sudo systemctl stop qra');
-    } else if ($new['chan'] === 0 && $new['button'] === 2 && $new['state'] === TRUE) {
+    } else if ($new->chan === 0 && $new->button === 2 && $new->state) {
         $msg = 'Icchan^ selittää kovasti jostakin. :-)';
-    } else if ($new['chan'] === 0 && $new['button'] === 3 && $new['state'] === TRUE) {
+    } else if ($new->chan === 0 && $new->button === 3 && $new->state) {
         $msg = club_evening_start();
-    } else if ($new['chan'] === 0 && $new['button'] === 3 && $new['state'] === FALSE) {
+    } else if ($new->chan === 0 && $new->button === 3 && !$new->state) {
         $msg = "Labilta ollaan tekemässä lähtöä...";
     } else {
-        $msg = NULL;
+        return; // No match, no reporting
     }
 
     if ($msg !== NULL) {
@@ -102,9 +102,9 @@ while (true) {
         continue;
     }
     
-    set_state(array(
+    set_state((object)[
         'chan' => strpos($o->tristate, '0'),
         'button' => strpos($o->tristate, '0', 4)-4,
         'state' => $o->tristate[11] === 'F',
-    ));
+    ]);
 }
