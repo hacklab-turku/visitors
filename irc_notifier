@@ -111,12 +111,13 @@ while (true) {
         set_state($res);
         break;
     case 'visitors.service':
-        if ($json === NULL) {
+        var_dump($entry);
+        if (gettype($entry->MESSAGE) !== "object") {
             // Garbage
             continue;
         }
 
-        if ($json->ids === []) {
+        if ($entry->MESSAGE->ids === []) {
             // Lab is now empty
             $leavers_result = db_execute($find_leavers, [$entry->MESSAGE->occupied]);
             $a = [];
@@ -126,10 +127,10 @@ while (true) {
             to_irc($lang::leave_line(merge_visits($a)));
         }
 
-        if ($json->occupied === $json->ts) {
+        if ($entry->MESSAGE->occupied === $entry->MESSAGE->ts) {
             // Lab got first visitor
             $user = db_execute($find_user_by_id, [$entry->MESSAGE->ids[0]])->fetchArray(SQLITE3_ASSOC);
-            to_irc($lang::join_line(join_visits($user)));
+            to_irc($lang::join_line($user));
         }
         break;
     }  
