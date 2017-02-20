@@ -47,6 +47,7 @@ while (true) {
         // Radio controlled buttons parsed by rtl_433
 
         $msg = NULL;
+        $save_state = TRUE;
         // Remove timestamps to identify duplicates
         if ($e->json !== NULL) $e->json->time = NULL;
         // Name some common RTL error cases
@@ -95,10 +96,11 @@ while (true) {
             } else break;
         } else if ($e->json->model === 'Generic temperature sensor 1' && $e->json->id === 0 && $e->json->temperature_C == 0.000) {
             $msg = 'Ding! Dong!';
+            $save_state = FALSE;
         } else break;
 
         // Now we are happy with parsing, write to IRC and update state.
-        $rtl_433_state = (array)$e->json;
+        if ($save_state) $rtl_433_state = (array)$e->json;
         if ($msg !== NULL) to_irc($msg);
         break;   
     case 'visitors.service':
