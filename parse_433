@@ -3,37 +3,30 @@
 
 require_once(__DIR__.'/lib/common.php');
 require_once(__DIR__.'/lib/visitors.php');
+require_once(__DIR__.'/lib/visitor_merge.php');
 require_once(__DIR__.'/lib/irc.php');
+require_once(__DIR__.'/lib/lang.php');
+$lang = 'LangFinnishHacklab';
 
-function club_evening_start() {
-    global $dhcp_lease_secs;
-    
-    // Search current visitors
-    $req = [
-        'lease' => $dhcp_lease_secs,
-        'now' => gettimeofday(true)
-    ];
-    $visits = get_visitors($req);
-
-    if (count($visits) === 0) {
-        $msg = "Joku painoi \"kerhoilta alkaa\"-painiketta. Kuka olet?";
-    } else {
-        $msg = "Kerhoilta alkoi, paikalla ";
-        $msg .= count($visits) > 1 ? 'ovat ' : 'on ';
-        foreach ($visits as $user) {
-            $msg .=
-                $user['nick'].' (saapui '.
-                date('H:i', $user['enter']).
-                '), ';
-        }
-        $msg = substr($msg, 0, -2); // Remove comma+space
-        $msg .= ". Tervetuloa!";
-    }
-    return $msg;
-}
+// IRC reporting, TODO move out of here
+$find_leavers = $db->prepare("
+	SELECT nick,enter,leave
+	FROM visit v
+	JOIN user_mac m ON (SELECT rowid
+	                    FROM user_mac
+	                    WHERE mac=v.mac AND changed<v.leave
+	                    ORDER BY changed DESC
+	                    LIMIT 1
+	                   )=m.rowid
+	JOIN user u ON m.id=u.id
+	WHERE leave >= ?
+	ORDER BY leave DESC
+");
+$find_user_by_id = $db->prepare("SELECT * from user WHERE id=?");
 
 function set_state($new) {
-    global $state;
+    global $lang;
+    static $state;
     if ($state === $new) {
         // Don't report multiple times the same
         return;
@@ -54,56 +47,90 @@ function set_state($new) {
     } else if ($e->chan === 0 && $e->button === 2 && $e->state) {
         $msg = 'Icchan^ selittää kovasti jostakin. :-)';
     } else if ($e->chan === 0 && $e->button === 3 && $e->state) {
-        $msg = club_evening_start();
+        global $dhcp_lease_secs;
+        
+        // Search current visitors
+        $req = [
+            'lease' => $dhcp_lease_secs,
+            'now' => time(),
+        ];
+        $msg = $lang::evening_start(get_visitors($req));
     } else if ($e->chan === 0 && $e->button === 3 && !$e->state) {
         $msg = "Labilta ollaan tekemässä lähtöä...";
     } else {
         return; // No match, no reporting
     }
-
+    
     $state = $new;
     to_irc($msg);
 }
 
-$pipe = popen("journalctl -n0 -ocat -fu rtl_433", "r");
-$state = NULL;
+function parse_433($e) {
+    if (gettype($e->MESSAGE) === "string") {
+        if (strpos($e->MESSAGE, 'rtlsdr_demod_write_reg failed') === 0) return "rtl_error";
+        if (strpos($e->MESSAGE, 'Using device ') === 0) return "rtl_ok";
+        return NULL;
+    } else {
+        // Not remote
+        if ($e->MESSAGE->model !== 'Generic Remote') return NULL;
+        // Button release
+        if ($e->MESSAGE->tristate[11] === '1') return NULL;
+    
+        return [
+            'chan' => strpos($e->MESSAGE->tristate, '0'),
+            'button' => strpos($e->MESSAGE->tristate, '0', 4)-4,
+            'state' => $e->MESSAGE->tristate[11] === 'F',
+        ];
+    }
+}
+
+$pipe = popen("exec journalctl -n0 -ojson -f -u visitors -u rtl_433", "r");
 
 while (true) {
-    $line = fgets($pipe);
-    if ($line === FALSE) {
+    $raw = fgets($pipe);
+    if ($raw === FALSE) {
         // EOF
         break;
     }
-
-    // Detect rtl_sdr failure and when it gets sane
-    if (strpos($line, 'rtlsdr_demod_write_reg failed') === 0) {
-        set_state("rtl_error");
-        continue;
+    $entry = json_decode($raw);
+    if ($entry === NULL) {
+        print("Panic: Not systemd log export format\n");
+        exit(1);
     }
-    if (strpos($line, 'Using device ') === 0) {
-        set_state("rtl_ok");
-        continue;
+
+    // Try decoding the message as well.
+    $x = json_decode($entry->MESSAGE);
+    if ($x !== NULL) {
+        $entry->MESSAGE = $x;
     }
     
-    $o = json_decode($line);
-    if ($o === NULL) {
-        // Skip garbage
-        continue;
-    }
+    switch ($entry->_SYSTEMD_UNIT) {
+    case 'rtl_433.service':
+        $res = parse_433($entry);
+        if ($res === NULL) continue;
+        set_state($res);
+        break;
+    case 'visitors.service':
+        if ($json === NULL) {
+            // Garbage
+            continue;
+        }
 
-    if ($o->model !== 'Generic Remote') {
-        // Not interesting device
-        continue;
-    }
+        if ($json->ids === []) {
+            // Lab is now empty
+            $leavers_result = db_execute($find_leavers, [$entry->MESSAGE->occupied]);
+            $a = [];
+            while (($row = $leavers_result->fetchArray(SQLITE3_ASSOC))) {
+                array_push($a, $row);
+            }
+            to_irc($lang::leave_line(merge_visits($a)));
+        }
 
-    if ($o->tristate[11] === '1') {
-        // Button release, not interested
-        continue;
-    }
-    
-    set_state([
-        'chan' => strpos($o->tristate, '0'),
-        'button' => strpos($o->tristate, '0', 4)-4,
-        'state' => $o->tristate[11] === 'F',
-    ]);
+        if ($json->occupied === $json->ts) {
+            // Lab got first visitor
+            $user = db_execute($find_user_by_id, [$entry->MESSAGE->ids[0]])->fetchArray(SQLITE3_ASSOC);
+            to_irc($lang::join_line(join_visits($user)));
+        }
+        break;
+    }  
 }
