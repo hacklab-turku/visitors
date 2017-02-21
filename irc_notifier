@@ -6,7 +6,12 @@ require_once(__DIR__.'/lib/visitors.php');
 require_once(__DIR__.'/lib/visitor_merge.php');
 require_once(__DIR__.'/lib/irc.php');
 require_once(__DIR__.'/lib/lang.php');
-$lang = 'LangFinnishHacklab';
+
+if (array_key_exists(1, $argv)) {
+    $lang = $argv[1];
+} else {
+    $lang = 'LangFinnishHacklab'; // Default locale
+}
 
 // IRC reporting, TODO move out of here
 $find_leavers = $db->prepare("
