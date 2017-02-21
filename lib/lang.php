@@ -64,6 +64,8 @@ class LangFinnishHacklab {
                     return lang_out('Hacklabin valot sammuivat!');
                 } else if ($e->button === 2 && $e->pressed) {
                     return lang_out('Nyt on eeppistä settiä! :-O');
+                } else if ($e->button === 2 && !$e->pressed) {
+                    return lang_out('Ydinsota syttyi. Lukekaa kaasunaamarilaukustanne löytyvät suojautumisohjeet!');
                 } else if ($e->button === 3 && $e->pressed) {
                     global $dhcp_lease_secs;
                     // Search current visitors
