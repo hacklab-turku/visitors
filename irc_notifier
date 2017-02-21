@@ -30,7 +30,7 @@ $find_leavers = $db->prepare("
 $find_user_by_id = $db->prepare("SELECT * from user WHERE id=?");
 
 $pipe = popen("exec journalctl -n0 -ojson -f -u visitors -u rtl_433", "r");
-$rtl_433_state = NULL;
+$last_press = 0;
 
 while (true) {
     $raw = fgets($pipe);
@@ -67,20 +67,23 @@ while (true) {
                 $e->json->chan = strpos($e->json->tristate, '0');
                 $e->json->button = strpos($e->json->tristate, '0', 4)-4;
                 $e->json->pressed = $e->json->tristate[11] === 'F';
+                $e->json->tristate = NULL; // Not needed anymore
             }
         }
 
-        // If the same state than earlier, don't care
-        if ($rtl_433_state === (array)$e->json) break;
+        // If the same state comes soon enough
+        if (time() < $last_press + 20 && $rtl_433_state === (array)$e->json) break;
 
         // Localize
         $out = $lang::button($e->json);
 
-        // Say to IRC and save state
+        // Say to IRC and save state. If got empty string, then save
+        // state but emit no message.
         if ($out === NULL) break;
-        if ($out->irc !== NULL) to_irc($out->irc, $lang::$chan);
-        if ($out->save_state) $rtl_433_state = (array)$e->json;
-        break;   
+        if ($out !== '') to_irc($out, $lang::$chan);
+        $rtl_433_state = (array)$e->json;
+        $last_press = time();
+        break;
     case 'visitors.service':
         // Visitors via DHCP parsed by follow_dhcp.
         

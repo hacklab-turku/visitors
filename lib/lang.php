@@ -46,9 +46,9 @@ class LangFinnishHacklab {
     public static function button($e) {
         switch ($e) {
         case 'rtl_error':
-            return lang_out('Softaradio meni sekaisin. :-/ Voisiko joku ottaa sen mustan tikun irti reitittimestä ja laittaa takaisin?');
+            return 'Softaradio meni sekaisin. :-/ Voisiko joku ottaa sen mustan tikun irti reitittimestä ja laittaa takaisin?';
         case 'rtl_ok':
-            return lang_out('Kiitos, softaradio toimii taas. <3');
+            return 'Kiitos, softaradio toimii taas. <3';
         default:
             switch ($e->model) {
             case 'Generic Remote':
@@ -58,30 +58,30 @@ class LangFinnishHacklab {
                 // Now parsing the events for buttons
                 if ($e->button === 0 && $e->pressed) {
                     exec('sudo systemctl start qra');
-                    return lang_out('Hacklabin valot syttyivät!');
+                    return 'Hacklabin valot syttyivät!';
                 } else if ($e->button === 0 && !$e->pressed) {
                     exec('sudo systemctl stop qra');
-                    return lang_out('Hacklabin valot sammuivat!');
+                    return 'Hacklabin valot sammuivat!';
                 } else if ($e->button === 2 && $e->pressed) {
-                    return lang_out('Nyt on eeppistä settiä! :-O');
+                    return 'Nyt on eeppistä settiä! :-O';
                 } else if ($e->button === 2 && !$e->pressed) {
-                    return lang_out('Ydinsota syttyi. Lukekaa kaasunaamarilaukustanne löytyvät suojautumisohjeet!');
+                    return 'Ydinsota syttyi. Lukekaa kaasunaamarilaukustanne löytyvät suojautumisohjeet!';
                 } else if ($e->button === 3 && $e->pressed) {
                     global $dhcp_lease_secs;
                     // Search current visitors
-                    $req = [
+                    return self::evening_start(get_visitors([
                         'lease' => $dhcp_lease_secs,
                         'now' => time(),
-                    ];
-                    return lang_out(self::evening_start(get_visitors($req)));
+                    ]));
                 } else if ($e->button === 3 && !$e->pressed) {
-                    return lang_out("Labilta ollaan tekemässä lähtöä...");
+                    return 'Labilta ollaan tekemässä lähtöä...';
                 }
                 break;
             case 'Generic temperature sensor 1':
                 if ($e->id === 0 && $e->temperature_C == 0.000) {
-                    return lang_out('Ding! Dong!', FALSE);
+                    return 'Ding! Dong!';
                 }
+                break;
             }
         }
     }

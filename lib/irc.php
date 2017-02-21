@@ -10,10 +10,3 @@ function to_irc($msg, $chan) {
     fwrite($irc_resource, "/notice $chan :$msg\n");
     fflush($irc_resource);
 }
-
-function lang_out($msg = NULL, $save_state = TRUE) {
-    return (object)[
-        'irc' => $msg,
-        'save_state' => $save_state,
-    ];
-}
