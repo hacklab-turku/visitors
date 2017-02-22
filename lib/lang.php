@@ -56,24 +56,24 @@ class LangFinnishHacklab {
                 if ($e->released || $e->chan !== 0) break;
 
                 // Now parsing the events for buttons
-                if ($e->button === 0 && $e->pressed) {
+                if ($e->button === 0 && $e->on) {
                     exec('sudo systemctl start qra');
                     return 'Hacklabin valot syttyivät!';
-                } else if ($e->button === 0 && !$e->pressed) {
+                } else if ($e->button === 0 && !$e->on) {
                     exec('sudo systemctl stop qra');
                     return 'Hacklabin valot sammuivat!';
-                } else if ($e->button === 2 && $e->pressed) {
+                } else if ($e->button === 2 && $e->on) {
                     return 'Nyt on eeppistä settiä! :-O';
-                } else if ($e->button === 2 && !$e->pressed) {
+                } else if ($e->button === 2 && !$e->on) {
                     return 'Ydinsota syttyi. Lukekaa kaasunaamarilaukustanne löytyvät suojautumisohjeet!';
-                } else if ($e->button === 3 && $e->pressed) {
+                } else if ($e->button === 3 && $e->on) {
                     global $dhcp_lease_secs;
                     // Search current visitors
                     return self::evening_start(get_visitors([
                         'lease' => $dhcp_lease_secs,
                         'now' => time(),
                     ]));
-                } else if ($e->button === 3 && !$e->pressed) {
+                } else if ($e->button === 3 && !$e->on) {
                     return 'Labilta ollaan tekemässä lähtöä...';
                 }
                 break;

@@ -66,7 +66,7 @@ while (true) {
                 $e->json->released = $e->json->tristate[11] === '1';
                 $e->json->chan = strpos($e->json->tristate, '0');
                 $e->json->button = strpos($e->json->tristate, '0', 4)-4;
-                $e->json->pressed = $e->json->tristate[11] === 'F';
+                $e->json->on = $e->json->tristate[11] === 'F';
                 $e->json->tristate = NULL; // Not needed anymore
             }
         }
