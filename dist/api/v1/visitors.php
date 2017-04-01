@@ -2,6 +2,16 @@
 require_once(__DIR__.'/../../../lib/common.php');
 require_once(__DIR__.'/../../../lib/visitors.php');
 
+// This function is from http://stackoverflow.com/a/7153133/514723 by velcrow
+function utf8($num)
+{
+    if($num<=0x7F)       return chr($num);
+    if($num<=0x7FF)      return chr(($num>>6)+192).chr(($num&63)+128);
+    if($num<=0xFFFF)     return chr(($num>>12)+224).chr((($num>>6)&63)+128).chr(($num&63)+128);
+    if($num<=0x1FFFFF)   return chr(($num>>18)+240).chr((($num>>12)&63)+128).chr((($num>>6)&63)+128).chr(($num&63)+128);
+    return '';
+}
+
 // Search with timestamp or current visitors
 $req = array_key_exists('at', $_GET) ?
     [
@@ -14,6 +24,24 @@ $req = array_key_exists('at', $_GET) ?
 $visits = get_visitors($req);
 
 switch (@$_GET['format'] ?: 'text') {
+case 'widget':
+    // People are reloading it anyway so let's serve them a playing
+    // card :-)
+    $suit = ["♠","♣","♥","♦"][rand(0,3)];
+    $num = ["A","2","3","4","5","6","7","8","9","10","J","Q","K"][rand(0,12)];
+    header("Content-Type: text/plain; charset=utf-8");
+    if (empty($visits)) {
+        print("Hacklab on tyhjä. $suit$num\n");
+    } else {
+        foreach ($visits as $data) {
+            $hour = idate('h', $data['enter']) - 1 % 12;
+            $min = idate('i', $data['enter']) >= 30 ? 12 : 0;
+            $point = utf8(0x1F550 + $hour + $min);
+            print($point." ".$data['nick']."\n");
+        }
+        print("$suit$num\n");
+    }
+    break;    
 case 'text':
     header("Content-Type: text/plain; charset=utf-8");
     if (empty($visits)) {
