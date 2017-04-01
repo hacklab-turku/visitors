@@ -16,8 +16,12 @@ $visits = get_visitors($req);
 switch (@$_GET['format'] ?: 'text') {
 case 'text':
     header("Content-Type: text/plain; charset=utf-8");
-    foreach ($visits as $data) {
-        print($data['nick']." (saapui ".date('H:i', $data['enter']).")\n");
+    if (empty($visits)) {
+        print("Hacklab on nyt tyhjä.\n");
+    } else {
+        foreach ($visits as $data) {
+            print($data['nick']." (saapui ".date('H:i', $data['enter']).")\n");
+        }
     }
     break;
 case 'iframe':
