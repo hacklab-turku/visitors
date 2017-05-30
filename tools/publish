@@ -1,0 +1,15 @@
+#!/bin/sh -eu
+cd `dirname "$0"`
+cd ..
+cat <<EOF
+BEGIN TRANSACTION;
+CREATE TABLE public_visit(
+	id INTEGER NOT NULL,
+	enter INTEGER NOT NULL,
+	leave INTEGER NOT NULL
+);
+CREATE INDEX ix_visit_id ON public_visit (id,enter);
+CREATE INDEX ix_visit_enter ON public_visit (enter, id);
+CREATE INDEX ix_visit_leave ON public_visit (leave, id);
+EOF
+sqlite3 db/db.sqlite ".mode insert public_visit" "select * from public_visit" ".print COMMIT;" ".dump user"

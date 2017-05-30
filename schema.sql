@@ -35,4 +35,13 @@ CREATE TABLE user_mac(
 CREATE INDEX ix_user_mac_mac on user_mac (mac,changed DESC);
 CREATE INDEX ix_user_mac_id on user_mac (id);
 
+CREATE VIEW public_visit AS
+SELECT id, enter, leave
+FROM visit v
+JOIN user u ON (SELECT id
+                FROM user_mac m
+                WHERE m.mac=v.mac AND changed<leave
+                ORDER BY changed DESC LIMIT 1
+               )=u.id;
+
 END;
