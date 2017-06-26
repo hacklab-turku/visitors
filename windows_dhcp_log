@@ -1,0 +1,9 @@
+#!/bin/sh -eu
+#
+# Follows Windows DHCP daily logs from a CIFS mount, rsync, or
+# similar. The output is journaled using a systemd service.
+#
+# NB! This follows only log files present at startup time. If you have
+# weekly rotation and don't yet have a log file for every weekday,
+# wait a week or create placeholder files.
+stdbuf -oL tail -Fqn 0 $1/DhcpSrvLog-* | stdbuf -oL grep -a '^1[01],'

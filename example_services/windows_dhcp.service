@@ -1,0 +1,11 @@
+[Unit]
+Description=Windows DCHP server log
+
+[Service]
+Type=simple
+User=tracker
+Group=tracker
+ExecStart=/home/tracker/visitors/windows_dhcp_log DIRNAME
+
+[Install]
+WantedBy=multi-user.target
