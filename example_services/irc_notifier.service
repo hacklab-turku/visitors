@@ -1,0 +1,11 @@
+[Unit]
+Description=Hacklab IRC notices from
+
+[Service]
+Type=simple
+User=tracker
+Group=tracker
+ExecStart=/home/tracker/visitors/irc_notifier
+
+[Install]
+WantedBy=multi-user.target

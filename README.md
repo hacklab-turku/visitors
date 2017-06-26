@@ -94,7 +94,17 @@ continuously. To run continously, just run it without arguments:
 ./follow_dhcp
 ```
 
-TODO systemd service file
+If it works then let's make it persistent. Copy
+[example_services/visitors.service](example_services/visitors.service)
+to `/etc/systemd/system` and edit path, user, and group to match your
+system. Then run:
+
+```sh
+sudo systemctl enable visitors
+sudo systemctl start visitors
+```
+
+TODO instructions for other services like IRC notifier and bot.
 
 ## Database
 

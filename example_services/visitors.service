@@ -1,0 +1,12 @@
+[Unit]
+Description=DHCP visitor tracker
+After=ircbot.target
+
+[Service]
+Type=simple
+User=tracker
+Group=tracker
+ExecStart=/home/tracker/visitors/follow_dhcp
+
+[Install]
+WantedBy=multi-user.target

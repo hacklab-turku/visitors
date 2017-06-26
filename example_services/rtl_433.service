@@ -1,0 +1,8 @@
+[Unit]
+Description=RTL 433
+
+[Service]
+Type=simple
+User=tracker
+Group=tracker
+ExecStart=/home/tracker/.local/bin/rtl_433 -g 30 -p -59 -l 10 -F json
