@@ -1,16 +1,23 @@
 #!/usr/bin/env php
 <?php
 // Parse command line arguments
-$options = getopt('od', [
+$options = getopt('ods:', [
     'database:',
     'debug',
     'oneshot',
     'test',
+    'source:',
 ]);
 
 // Process data up to date (--oneshot) or follow log continuously (no arg)
 $follow = !array_key_exists('oneshot', $options) && !array_key_exists('o', $options);
 $debug = array_key_exists('debug', $options) || array_key_exists('d', $options);
+$source = @$options['s'] ?: @$options['source'] ?: 'dnsmasq';
+
+if (!in_array($source, ['dnsmasq','windows'])) {
+    print("Unsupported --source option. Must be either 'dnsmasq' or 'windows'\n");
+    exit(1);
+}
 
 require_once(__DIR__.'/lib/common.php');
 if ($debug) print_r($GLOBALS);
@@ -49,7 +56,10 @@ $find_users = $db->prepare("
 // Data source
 $after = $cursor->get() === NULL ? '' : "'--after-cursor=".$cursor->get()."'";
 $follow_arg = $follow ? '-f' : '';
-$pipe = popen("exec journalctl -n all -u dnsmasq -o json $after $follow_arg", "r");
+$pipe = popen([
+    'dnsmasq' => "exec journalctl -n all -u dnsmasq -o json $after $follow_arg",
+    'windows' => "exec journalctl -n all -u windows_dhcp -o json $after $follow_arg",
+][$source], "r");
 $min_leave = time(); // First we don't know, play sure and wait whole lease time.
 if (array_key_exists('test', $options)) {
     print("Test mode, stopping\n");
@@ -82,21 +92,40 @@ while (true) {
             print("Panic: Not systemd log export format\n");
             exit(1);
         }
-    
-        // Extract payload, if any.
-        preg_match('/^[^ ]* DHCPACK[^ ]* ([^ ]*) ([^ ]*) ?(.*)/', $vars->MESSAGE, $matches);
-        if (empty($matches)) {
-            // This line is not interesting. Go get new
-            continue;
-        }
+
+        switch ($source) {
+        case 'dnsmasq':
+            // Extract payload, if any.
+            preg_match('/^[^ ]* DHCPACK[^ ]* ([^ ]*) ([^ ]*) ?(.*)/', $vars->MESSAGE, $matches);
+            if (empty($matches)) {
+                // This line is not interesting. Go get new
+                continue 2;
+            }
         
-        // Populate all data and execute SQL
-        $data = [
-            'now' => floor($vars->__REALTIME_TIMESTAMP / 1000000), // seconds
-            'mac' => strtoupper(str_replace(':', '', $matches[2])), // uppercase mac with no colons
-            'ip' => $matches[1],
-            'host' => $matches[3],
-        ];
+            // Populate all data and execute SQL
+            $data = [
+                'now' => floor($vars->__REALTIME_TIMESTAMP / 1000000), // seconds
+                'mac' => strtoupper(str_replace(':', '', $matches[2])), // uppercase mac with no colons
+                'ip' => $matches[1],
+                'host' => $matches[3],
+            ];
+            break;
+        case 'windows':
+            // Extract payload, if any.
+            preg_match('|^1[01],(../../..,..:..:..),[^,]*,([^,]*),([^\.,]*)[^,]*,([^,]*)|', $vars->MESSAGE, $matches);
+            if (empty($matches)) {
+                // This line is not interesting. Go get new
+                continue 2;
+            }
+
+            $data = [
+                'now' => DateTime::createFromFormat('m/d/y,H:i:s',$matches[1])->getTimestamp(),
+                'mac' => $matches[4],
+                'ip' => $matches[2],
+                'host' => $matches[3],
+            ];
+            break;
+        }
         if ($debug) var_dump($data);
 
         // Transaction starts here and lasts until cursor update. If
