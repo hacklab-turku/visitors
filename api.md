@@ -10,7 +10,7 @@ method | endpoint | arguments | description
 ------ | -------- | --------- | -----------
 GET | /v1/visitors | at<br>format | Get visitor nicknames. Time can be given with *at*, defaults to present. Possible *format* options are *text* (default) for human readable list, *iframe* for legacy HTML format for web site, and *json* for JSON format.
 GET | /v1/nicks | - | List all nicknames on the system
-GET | /v1/nick | - | Get information about the device
+GET | /v1/nick | ip | Get information about the device (Default IP address: Your IP)
 PUT | /v1/nick | nick | Track the device using nickname *nick*. Multiple devices can share the same name.
 DELETE | /v1/nick | - | Delete device, do not track anymore
 

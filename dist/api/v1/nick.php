@@ -58,7 +58,14 @@ $nickmissing = [
 
 switch ($_SERVER['REQUEST_METHOD']) {
 case 'GET':
-    $o = db_execute($get_user, [$ip])->fetchArray(SQLITE3_ASSOC) ?: $outerror;
+    // Allow IP queries for everybody
+    if (array_key_exists('ip', $_GET)) {
+        $o = db_execute($get_user, [$_GET['ip']])->fetchArray(SQLITE3_ASSOC) ?: $outerror;
+        unset($o['mac']);
+        unset($o['changed']);
+    } else {
+        $o = db_execute($get_user, [$ip])->fetchArray(SQLITE3_ASSOC) ?: $outerror;
+    }
     break;
 case 'DELETE':
     db_execute($insert_by_uid, [
