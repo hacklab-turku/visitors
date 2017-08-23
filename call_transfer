@@ -8,11 +8,11 @@ journalctl -fu visitors -o cat -n 0 _TRANSPORT=stdout | jq --unbuffered -r 'if .
     case $state in
 	out)
 	    # Activate call transfer
-	    chat -vsT "$TEL" ABORT ERROR ABORT 'NO CARRIER' '' 'AT+CCFC=0,1,"\T",145,1' OK <"$DEV" >"$DEV"
+	    chat -eT "$TEL" ABORT ERROR ABORT 'NO CARRIER' '' 'AT+CCFC=0,1,"\T",145,1' OK <"$DEV" >"$DEV"
 	    ;;
 	in)
 	    # Cancel call transfer
-	    chat -vs ABORT ERROR ABORT 'NO CARRIER' '' 'AT+CCFC=0,0' OK <"$DEV" >"$DEV"
+	    chat -e ABORT ERROR ABORT 'NO CARRIER' '' 'AT+CCFC=0,0' OK <"$DEV" >"$DEV"
 	    ;;
     esac
 done
