@@ -1,5 +1,6 @@
 [Unit]
-Description=Hacklab IRC notices from
+Description=Hacklab IRC notices
+After=ircbot.target
 
 [Service]
 Type=simple

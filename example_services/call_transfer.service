@@ -1,0 +1,12 @@
+[Unit]
+Description=Keeps call transfer on when nobody is in
+After=visitors.service
+
+[Service]
+Type=simple
+User=tracker
+Group=tracker
+ExecStart=/home/tracker/visitors/call_transfer
+
+[Install]
+WantedBy=multi-user.target

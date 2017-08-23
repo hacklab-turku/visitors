@@ -1,6 +1,5 @@
 [Unit]
 Description=DHCP visitor tracker
-After=ircbot.target
 
 [Service]
 Type=simple
