@@ -1,5 +1,5 @@
 [Unit]
-Description=Keeps call transfer on when nobody is in
+Description=Call transfer service when nobody is in
 After=visitors.service
 
 [Service]
