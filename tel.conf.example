@@ -1,0 +1,5 @@
+# Cellphone serial port (or rfcomm port)
+DEV=/dev/serial/by-id/usb-Nokia_Nokia_E90-if0a
+
+# Telephone number where to transfer calls to
+TEL=+3581234567
