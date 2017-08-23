@@ -13,7 +13,6 @@ if (array_key_exists(1, $argv)) {
     $lang = 'LangFinnishHacklab'; // Default locale
 }
 
-// IRC reporting, TODO move out of here
 $find_leavers = $db->prepare("
 	SELECT nick,enter,leave
 	FROM visit v
