@@ -58,9 +58,13 @@ class LangFinnishHacklab {
                 // Now parsing the events for buttons
                 if ($e->button === 0 && $e->on) {
                     exec('sudo systemctl start qra');
+                    exec('sudo /usr/sbin/vbetool dpms on');
+                    exec('sudo /bin/chvt 1');
                     return 'Hacklabin valot syttyivät!';
                 } else if ($e->button === 0 && !$e->on) {
                     exec('sudo systemctl stop qra');
+                    exec('sudo /usr/sbin/vbetool dpms off');
+                    exec('ssh shutdown-alarmpi');
                     return 'Hacklabin valot sammuivat!';
                 } else if ($e->button === 2 && $e->on) {
                     return 'Nyt on eeppistä settiä! :-O';
