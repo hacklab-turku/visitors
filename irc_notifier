@@ -6,13 +6,9 @@ require_once(__DIR__.'/lib/visitors.php');
 require_once(__DIR__.'/lib/visitor_merge.php');
 require_once(__DIR__.'/lib/lang.php');
 
-if (array_key_exists(1, $argv)) {
-    $lang = $argv[1];
-} else {
-    $lang = 'LangFinnishHacklab'; // Default locale
-}
-
-$lang::init_notices();
+// Create new notifier, defaulting to author's home lab.
+$notify_class = array_key_exists(1, $argv) ? $argv[1] : 'LangFinnishHacklab';
+$notifier = new $notify_class();
 
 $find_leavers = $db->prepare("
 	SELECT nick,enter,leave
@@ -75,12 +71,12 @@ while (true) {
         if (time() < $last_press + 20 && $rtl_433_state === (array)$e->json) break;
 
         // Localize
-        $out = $lang::button($e->json);
+        $out = $notifier->button($e->json);
 
         // Send notice to social media and save state. If got empty
         // string, then save state but emit no message.
         if ($out === NULL) break;
-        if ($out !== '') $lang::notice($out);
+        if ($out !== '') $notifier->notice($out);
         $rtl_433_state = (array)$e->json;
         $last_press = time();
         break;
@@ -97,13 +93,13 @@ while (true) {
             while (($row = $leavers_result->fetchArray(SQLITE3_ASSOC))) {
                 array_push($a, $row);
             }
-            $lang::notice($lang::leave_line(merge_visits($a)));
+            $notifier->notice($notifier->leave_line(merge_visits($a)));
         }
 
         if ($e->json->occupied === $e->json->ts) {
             // Lab got first visitor
             $user = db_execute($find_user_by_id, [$e->json->ids[0]])->fetchArray(SQLITE3_ASSOC);
-            $lang::notice($lang::join_line($user));
+            $notifier->notice($notifier->join_line($user));
         }
         break;
     }  

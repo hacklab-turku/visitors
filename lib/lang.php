@@ -3,26 +3,24 @@ require_once(__DIR__.'/common.php');
 
 class LangFinnishHacklab {
 
-    private static $irc;
+    private $irc;
 
-    public static function init_notices() {
+    public function __construct() {
         // Ensure socket rights (requires a rule in sudoers)
         exec('sudo chown :tracker /tmp/irssiproxy.sock');
 
         // Connect to it
-        LangFinnishHacklab::$irc = stream_socket_client('unix:///tmp/irssiproxy.sock', $errno, $errstr);
+        $this->irc = stream_socket_client('unix:///tmp/irssiproxy.sock', $errno, $errstr);
         
-        if (!LangFinnishHacklab::$irc) err("Unable to open IRC socket: $errstr ($errno)");
-        fwrite(LangFinnishHacklab::$irc, "pass freenode\nuser\nnick\n");
-        fflush(LangFinnishHacklab::$irc);
+        if (!$this->irc) err("Unable to open irssiproxy socket: $errstr ($errno)");
+        fwrite($this->irc, "pass freenode\nuser\nnick\n");
+        fflush($this->irc);
     }
 
-    function notice($msg) {
-        fwrite(STDERR,"Testaan $msg\n");
-        $chan = '#hacklab.jkl';
+    function notice($msg, $chan = '#hacklab.jkl') {
         // FIXME msg escaping of newline, reading of return values etc.
-        fwrite(LangFinnishHacklab::$irc, "notice $chan :$msg\n");
-        fflush(LangFinnishHacklab::$irc);
+        fwrite($this->irc, "notice $chan :$msg\n");
+        fflush($this->irc);
     }
     
     public static function leave_line($a) {
