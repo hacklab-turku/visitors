@@ -4,10 +4,10 @@
 require_once(__DIR__.'/lib/common.php');
 require_once(__DIR__.'/lib/visitors.php');
 require_once(__DIR__.'/lib/visitor_merge.php');
-require_once(__DIR__.'/lib/lang.php');
+require_once(__DIR__.'/lib/localization.php');
 
 // Create new notifier, defaulting to author's home lab.
-$notify_class = array_key_exists(1, $argv) ? $argv[1] : 'LangFinnishHacklab';
+$notify_class = array_key_exists(1, $argv) ? $argv[1] : 'LocalizationHacklabJkl';
 $notifier = new $notify_class();
 
 $find_leavers = $db->prepare("

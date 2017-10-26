@@ -1,7 +1,7 @@
 <?php
 require_once(__DIR__.'/common.php');
 
-class LangFinnishHacklab {
+class LocalizationHacklabJkl {
 
     private $irc;
 
