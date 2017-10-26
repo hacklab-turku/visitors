@@ -4,7 +4,6 @@
 require_once(__DIR__.'/lib/common.php');
 require_once(__DIR__.'/lib/visitors.php');
 require_once(__DIR__.'/lib/visitor_merge.php');
-require_once(__DIR__.'/lib/irc.php');
 require_once(__DIR__.'/lib/lang.php');
 
 if (array_key_exists(1, $argv)) {
@@ -12,6 +11,8 @@ if (array_key_exists(1, $argv)) {
 } else {
     $lang = 'LangFinnishHacklab'; // Default locale
 }
+
+$lang::init_notices();
 
 $find_leavers = $db->prepare("
 	SELECT nick,enter,leave
@@ -76,10 +77,10 @@ while (true) {
         // Localize
         $out = $lang::button($e->json);
 
-        // Say to IRC and save state. If got empty string, then save
-        // state but emit no message.
+        // Send notice to social media and save state. If got empty
+        // string, then save state but emit no message.
         if ($out === NULL) break;
-        if ($out !== '') to_irc($out, $lang::$chan);
+        if ($out !== '') $lang::notice($out);
         $rtl_433_state = (array)$e->json;
         $last_press = time();
         break;
@@ -96,13 +97,13 @@ while (true) {
             while (($row = $leavers_result->fetchArray(SQLITE3_ASSOC))) {
                 array_push($a, $row);
             }
-            to_irc($lang::leave_line(merge_visits($a)), $lang::$chan);
+            $lang::notice($lang::leave_line(merge_visits($a)));
         }
 
         if ($e->json->occupied === $e->json->ts) {
             // Lab got first visitor
             $user = db_execute($find_user_by_id, [$e->json->ids[0]])->fetchArray(SQLITE3_ASSOC);
-            to_irc($lang::join_line($user), $lang::$chan);
+            $lang::notice($lang::join_line($user));
         }
         break;
     }  
