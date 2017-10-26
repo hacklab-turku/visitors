@@ -23,7 +23,7 @@ class LangFinnishHacklab {
         fflush($this->irc);
     }
     
-    public static function leave_line($a) {
+    public function last_leave($a) {
         $msg = "Hacklab on nyt tyhjä. Paikalla oli";
         $msg .= count($a) > 1 ? 'vat ' : ' ';
         foreach ($a as $user => $visits) {
@@ -38,15 +38,15 @@ class LangFinnishHacklab {
             // Add closing brace before comma+space the hard way
             $msg = substr($msg, 0, -2).'), ';
         }
-        return substr($msg, 0, -2); // Remove comma+space
+        $this->notice(substr($msg, 0, -2)); // Remove comma+space
     }
 
 
-    public static function join_line($a) {
-        return "Ensimmäisenä saapui ".$a['nick'];
+    public function first_join($a) {
+        $this->notice("Ensimmäisenä saapui ".$a['nick']);
     }
 
-    public static function evening_start($visits) {
+    public function evening_start($visits) {
         if (count($visits) === 0) {
             $msg = "Joku painoi \"kerhoilta alkaa\"-painiketta. Kuka olet?";
         } else {
@@ -61,15 +61,17 @@ class LangFinnishHacklab {
             $msg = substr($msg, 0, -2); // Remove comma+space
             $msg .= ". Tervetuloa!";
         }
-        return $msg;
+        $this->notice($msg);
     }
 
-    public static function button($e) {
+    public function button($e) {
         switch ($e) {
         case 'rtl_error':
-            return 'Softaradio meni sekaisin. :-/ Voisiko joku ottaa sen mustan tikun irti reitittimestä ja laittaa takaisin?';
+            $this->notice('Softaradio meni sekaisin. :-/ Voisiko joku ottaa sen mustan tikun irti reitittimestä ja laittaa takaisin?');
+            break;
         case 'rtl_ok':
-            return 'Kiitos, softaradio toimii taas. <3';
+            $this->notice('Kiitos, softaradio toimii taas. <3');
+            break;
         default:
             switch ($e->model) {
             case 'Generic Remote':
@@ -81,33 +83,34 @@ class LangFinnishHacklab {
                     exec('sudo systemctl start qra');
                     exec('sudo /usr/sbin/vbetool dpms on');
                     exec('sudo /bin/chvt 1');
-                    return 'Hacklabin valot syttyivät!';
+                    $this->notice('Hacklabin valot syttyivät!');
                 } else if ($e->button === 0 && !$e->on) {
                     exec('sudo systemctl stop qra');
                     exec('sudo /usr/sbin/vbetool dpms off');
                     exec('ssh shutdown-alarmpi');
-                    return 'Hacklabin valot sammuivat!';
+                    $this->notice('Hacklabin valot sammuivat!');
                 } else if ($e->button === 2 && $e->on) {
-                    return 'Nyt on eeppistä settiä! :-O';
+                    $this->notice('Nyt on eeppistä settiä! :-O');
                 } else if ($e->button === 2 && !$e->on) {
-                    return 'Ydinsota syttyi. Lukekaa kaasunaamarilaukustanne löytyvät suojautumisohjeet!';
+                    $this->notice('Ydinsota syttyi. Lukekaa kaasunaamarilaukustanne löytyvät suojautumisohjeet!');
                 } else if ($e->button === 3 && $e->on) {
                     global $dhcp_lease_secs;
                     // Search current visitors
-                    return self::evening_start(get_visitors([
+                    $this->evening_start(get_visitors([
                         'lease' => $dhcp_lease_secs,
                         'now' => time(),
                     ]));
                 } else if ($e->button === 3 && !$e->on) {
-                    return 'Labilta ollaan tekemässä lähtöä...';
+                    $this->notice('Labilta ollaan tekemässä lähtöä...');
                 }
                 break;
             case 'Generic temperature sensor 1':
                 if ($e->id === 0 && $e->temperature_C == 0.000) {
-                    return 'Ding! Dong!';
+                    $this->notice('Ding! Dong!');
                 }
                 break;
             }
+            break;
         }
     }
 }

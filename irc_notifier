@@ -71,12 +71,9 @@ while (true) {
         if (time() < $last_press + 20 && $rtl_433_state === (array)$e->json) break;
 
         // Localize
-        $out = $notifier->button($e->json);
+        $notifier->button($e->json);
 
-        // Send notice to social media and save state. If got empty
-        // string, then save state but emit no message.
-        if ($out === NULL) break;
-        if ($out !== '') $notifier->notice($out);
+        // Save last state
         $rtl_433_state = (array)$e->json;
         $last_press = time();
         break;
@@ -93,13 +90,13 @@ while (true) {
             while (($row = $leavers_result->fetchArray(SQLITE3_ASSOC))) {
                 array_push($a, $row);
             }
-            $notifier->notice($notifier->leave_line(merge_visits($a)));
+            $notifier->last_leave(merge_visits($a));
         }
 
         if ($e->json->occupied === $e->json->ts) {
             // Lab got first visitor
             $user = db_execute($find_user_by_id, [$e->json->ids[0]])->fetchArray(SQLITE3_ASSOC);
-            $notifier->notice($notifier->join_line($user));
+            $notifier->first_join($user);
         }
         break;
     }  
