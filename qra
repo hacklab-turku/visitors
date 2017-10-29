@@ -1,13 +1,16 @@
-#!/bin/sh -eu
-cd "`dirname "$0"`"
-{
-    # Sleep a bit to avoid notifying too early
-    sleep 15
-    # Poll visitor and if none, retry after 10 seconds
-    while ./is_empty; do
-	echo 'QRA?'
-	sleep 10
+#!/bin/bash -eu
+#
+# This contains bashisms like read -t
+
+cd "`dirname $0`"
+
+journalctl -fu visitors -o cat -n 1 _TRANSPORT=stdout |
+    jq --unbuffered -r 'if .ids==[] then empty else "in" end | @text' | {
+    while ! read -t 15 MSG; do
+	echo "Hei, kuka olet? Rekisteröidy osoitteessa hacklab piste ihme piste org kautta visitors"
     done
-    # User found. Thanks!
-    echo '%T1000%W25TU'
-} | sudo cw -s console
+    # Someone in
+    echo "Tervetuloa Hacklabille, `./is_empty`"
+    sleep 5
+    kill `ps -o pid --no-headers --ppid $$`
+} | espeak-ng -v fi -p 60

@@ -10,4 +10,10 @@ $visits = get_visitors([
     'now' => gettimeofday(true)
 ]);
 
-exit((int)!empty($visits));
+
+if (empty($visits)) {
+    exit(0);
+} else {
+    print($visits[0]['nick']."\n");
+    exit(1);
+}
