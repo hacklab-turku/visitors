@@ -20,6 +20,7 @@ class LocalizationHacklabJkl {
     function notice($msg, $chan = '#hacklab.jkl') {
         // FIXME msg escaping of newline, reading of return values etc.
         fwrite($this->irc, "notice $chan :$msg\n");
+        fwrite($this->irc, "notice hacklabjkl :$msg\n");
         fflush($this->irc);
     }
     
@@ -48,7 +49,7 @@ class LocalizationHacklabJkl {
 
     public function evening_start($visits) {
         if (count($visits) === 0) {
-            $msg = "Joku painoi \"kerhoilta alkaa\"-painiketta. Kuka olet?";
+            exec('echo "Tunnistaudu ennen kuin kerhoilta voi alkaa!" | espeak-ng -v fi -p 60');
         } else {
             $msg = "Kerhoilta alkoi, paikalla ";
             $msg .= count($visits) > 1 ? 'ovat ' : 'on ';
@@ -60,18 +61,19 @@ class LocalizationHacklabJkl {
             }
             $msg = substr($msg, 0, -2); // Remove comma+space
             $msg .= ". Tervetuloa!";
+            $this->notice($msg);
+            exec('echo "Kerhoilta aloitettu." | espeak-ng -v fi -p 60');
         }
-        $this->notice($msg);
     }
 
     public function button($e) {
         switch ($e) {
         case 'rtl_error':
             $this->notice('Softaradio meni sekaisin. :-/ Voisiko joku ottaa sen mustan tikun irti reitittimestä ja laittaa takaisin?');
-            break;
+            return true;
         case 'rtl_ok':
             $this->notice('Kiitos, softaradio toimii taas. <3');
-            break;
+            return true;
         default:
             switch ($e->model) {
             case 'Generic Remote':
@@ -80,15 +82,19 @@ class LocalizationHacklabJkl {
 
                 // Now parsing the events for buttons
                 if ($e->button === 0 && $e->on) {
+                    $this->notice('Hacklabin valot syttyivät!');
+                    exec('sispmctl -o 1 -o 2 -o 3 -o 4');
+                    sleep(4); // Let the amplifier to warm up
                     exec('sudo systemctl start qra');
                     exec('sudo /usr/sbin/vbetool dpms on');
                     exec('sudo /bin/chvt 1');
-                    $this->notice('Hacklabin valot syttyivät!');
                 } else if ($e->button === 0 && !$e->on) {
-                    exec('sudo systemctl stop qra');
-                    exec('sudo /usr/sbin/vbetool dpms off');
-                    exec('ssh shutdown-alarmpi');
                     $this->notice('Hacklabin valot sammuivat!');
+                    exec('sudo systemctl stop qra');
+                    exec('sispmctl -f 2 -f 3 -f 4');
+                    exec('echo "Hei hei ja turvallista kotimatkaa!" | espeak-ng -v fi -p 60');
+                    exec('sispmctl -f 1');
+                    exec('ssh shutdown-alarmpi');
                 } else if ($e->button === 2 && $e->on) {
                     $this->notice('Nyt on eeppistä settiä! :-O');
                 } else if ($e->button === 2 && !$e->on) {
@@ -102,15 +108,19 @@ class LocalizationHacklabJkl {
                     ]));
                 } else if ($e->button === 3 && !$e->on) {
                     $this->notice('Labilta ollaan tekemässä lähtöä...');
+                    exec('echo "Muistakaa siivota ennen lähtöä!" | espeak-ng -v fi -p 60');
+                } else {
+                    return false;
                 }
-                break;
+                return true;
             case 'Generic temperature sensor 1':
                 if ($e->id === 0 && $e->temperature_C == 0.000) {
                     $this->notice('Ding! Dong!');
+                    return true;
                 }
-                break;
+                return false;
             }
-            break;
+            return false;
         }
     }
 }

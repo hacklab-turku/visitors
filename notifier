@@ -71,11 +71,11 @@ while (true) {
         if (time() < $last_press + 20 && $rtl_433_state === (array)$e->json) break;
 
         // Localize
-        $notifier->button($e->json);
-
-        // Save last state
-        $rtl_433_state = (array)$e->json;
-        $last_press = time();
+        if ($notifier->button($e->json)) {
+            // Save last state if successful
+            $rtl_433_state = (array)$e->json;
+            $last_press = time();
+        }
         break;
     case 'visitors.service':
         // Visitors via DHCP parsed by follow_dhcp.
