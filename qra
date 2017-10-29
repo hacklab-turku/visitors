@@ -7,7 +7,7 @@ cd "`dirname $0`"
 journalctl -fu visitors -o cat -n 1 _TRANSPORT=stdout |
     jq --unbuffered -r 'if .ids==[] then empty else "in" end | @text' | {
     while ! read -t 15 MSG; do
-	echo "Hei, kuka olet? Rekisteröidy osoitteessa hacklab piste ihme piste org kautta visitors"
+	echo "Hei, kuka sinä olet? Laita veelan päälle ja rekisteröidy tarvittaessa nettisivuillamme."
     done
     # Someone in
     echo "Tervetuloa häkläbille, `./is_empty`"
