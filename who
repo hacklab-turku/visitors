@@ -12,8 +12,8 @@ $visits = get_visitors([
 
 
 if (empty($visits)) {
-    exit(0);
-} else {
-    print($visits[0]['nick']."\n");
     exit(1);
 }
+
+print($visits[0]['nick']."\n");
+

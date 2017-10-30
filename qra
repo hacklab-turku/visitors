@@ -10,7 +10,7 @@ journalctl -fu visitors -o cat -n 1 _TRANSPORT=stdout |
 	echo "Hei, kuka sinä olet? Laita veelan päälle ja rekisteröidy tarvittaessa nettisivuillamme."
     done
     # Someone in
-    echo "Tervetuloa häkläbille, `./is_empty`"
+    echo "Tervetuloa häkläbille, `./who`"
     sleep 5
     kill `ps -o pid --no-headers --ppid $$`
 } | espeak-ng -v fi -p 60
