@@ -4,6 +4,7 @@ require_once(__DIR__.'/common.php');
 class LocalizationHacklabJkl {
 
     private $irc;
+    private $espeak;
 
     public function __construct() {
         // Ensure socket rights (requires a rule in sudoers)
@@ -15,6 +16,8 @@ class LocalizationHacklabJkl {
         if (!$this->irc) err("Unable to open irssiproxy socket: $errstr ($errno)");
         fwrite($this->irc, "pass freenode\nuser\nnick\n");
         fflush($this->irc);
+
+        $this->espeak = popen("exec espeak-ng -v fi -p 60", "w");
     }
 
     function notice($msg, $chan = '#hacklab.jkl') {
@@ -23,7 +26,13 @@ class LocalizationHacklabJkl {
         fwrite($this->irc, "notice hacklabjkl :$msg\n");
         fflush($this->irc);
     }
-    
+
+    function speak($msg) {
+        // FIXME Escape SSML sequences
+        fwrite($this->espeak, "$msg\n");
+        fflush($this->espeak);
+    }
+
     public function last_leave($a) {
         $msg = "Hacklab on nyt tyhjä. Paikalla oli";
         $msg .= count($a) > 1 ? 'vat ' : ' ';
@@ -49,7 +58,7 @@ class LocalizationHacklabJkl {
 
     public function evening_start($visits) {
         if (count($visits) === 0) {
-            exec('echo "Tunnistaudu ennen kuin kerhoilta voi alkaa!" | espeak-ng -v fi -p 60');
+            $this->speak('Tunnistaudu ennen kuin kerhoilta voi alkaa!');
         } else {
             $msg = "Kerhoilta alkoi, paikalla ";
             $msg .= count($visits) > 1 ? 'ovat ' : 'on ';
@@ -62,7 +71,7 @@ class LocalizationHacklabJkl {
             $msg = substr($msg, 0, -2); // Remove comma+space
             $msg .= ". Tervetuloa!";
             $this->notice($msg);
-            exec('echo "Kerhoilta aloitettu." | espeak-ng -v fi -p 60');
+            $this->speak('Kerhoilta aloitettu.');
         }
     }
 
@@ -91,7 +100,8 @@ class LocalizationHacklabJkl {
                     $this->notice('Hacklabin valot sammuivat!');
                     exec('sudo systemctl stop qra');
                     exec('sispmctl -f 2 -f 3 -f 4');
-                    exec('echo "Hei hei ja turvallista kotimatkaa!" | espeak-ng -v fi -p 60');
+                    $this->speak('Hei hei ja turvallista kotimatkaa!');
+                    sleep(3);
                     exec('sispmctl -f 1');
                     exec('ssh shutdown-alarmpi');
                 } else if ($e->button === 2 && $e->on) {
@@ -107,7 +117,7 @@ class LocalizationHacklabJkl {
                     ]));
                 } else if ($e->button === 3 && !$e->on) {
                     $this->notice('Labilta ollaan tekemässä lähtöä...');
-                    exec('echo "Muistakaa siivota ennen lähtöä!" | espeak-ng -v fi -p 60');
+                    $this->speak('Muistakaa siivota ennen lähtöä!');
                 } else {
                     return false;
                 }
