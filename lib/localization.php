@@ -69,7 +69,7 @@ class LocalizationHacklabJkl {
     public function button($e) {
         switch ($e) {
         case 'rtl_error':
-            $this->notice('Softaradio meni sekaisin. :-/ Voisiko joku ottaa sen mustan tikun irti reitittimestä ja laittaa takaisin?');
+            $this->notice('Softaradio meni sekaisin. :-/ Voisiko joku ottaa sen koneen takana olevan USB-radion irti ja laittaa takaisin?');
             return true;
         case 'rtl_ok':
             $this->notice('Kiitos, softaradio toimii taas. <3');
@@ -86,7 +86,6 @@ class LocalizationHacklabJkl {
                     exec('sispmctl -o 1 -o 2 -o 3 -o 4');
                     sleep(4); // Let the amplifier to warm up
                     exec('sudo systemctl start qra');
-                    exec('sudo /usr/sbin/vbetool dpms on');
                     exec('sudo /bin/chvt 1');
                 } else if ($e->button === 0 && !$e->on) {
                     $this->notice('Hacklabin valot sammuivat!');
