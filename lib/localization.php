@@ -99,11 +99,16 @@ class LocalizationHacklabJkl {
                 } else if ($e->button === 0 && !$e->on) {
                     $this->notice('Hacklabin valot sammuivat!');
                     exec('sudo systemctl stop qra');
+                    exec('sudo systemctl stop slayradio');
                     exec('sispmctl -f 2 -f 3 -f 4');
                     $this->speak('Hei hei ja turvallista kotimatkaa!');
                     sleep(3);
                     exec('sispmctl -f 1');
                     exec('ssh shutdown-alarmpi');
+                } else if ($e->button === 1 && $e->on) {
+                    exec('sudo systemctl start slayradio');
+                } else if ($e->button === 1 && !$e->on) {
+                    exec('sudo systemctl stop slayradio');
                 } else if ($e->button === 2 && $e->on) {
                     $this->notice('Nyt on eeppistä settiä! :-O');
                 } else if ($e->button === 2 && !$e->on) {
