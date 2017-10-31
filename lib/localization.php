@@ -7,13 +7,20 @@ class LocalizationHacklabJkl {
     private $espeak;
 
     public function __construct() {
-        // Ensure socket rights (requires a rule in sudoers)
-        exec('sudo chown :tracker /tmp/irssiproxy.sock');
+        while (true) {
+            // Ensure socket rights (requires a rule in sudoers)
+            exec('sudo chown :tracker /tmp/irssiproxy.sock');
 
-        // Connect to it
-        $this->irc = stream_socket_client('unix:///tmp/irssiproxy.sock', $errno, $errstr);
-        
-        if (!$this->irc) err("Unable to open irssiproxy socket: $errstr ($errno)");
+            // Connect to it
+            $this->irc = stream_socket_client('unix:///tmp/irssiproxy.sock', $errno, $errstr);
+
+            if ($this->irc) break;
+
+            // Report error and try again later
+            error_log("Unable to open irssiproxy socket: $errstr ($errno)");
+            sleep(30);
+        }
+
         fwrite($this->irc, "pass freenode\nuser\nnick\n");
         fflush($this->irc);
 
