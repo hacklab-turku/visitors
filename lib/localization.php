@@ -99,7 +99,7 @@ class LocalizationHacklabJkl {
                 // Now parsing the events for buttons
                 if ($e->button === 0 && $e->on) {
                     $this->notice('Hacklabin valot syttyivät!');
-                    exec('sispmctl -o 1 -o 2 -o 3 -o 4');
+                    exec('sispmctl -o 1 -o 2 -o 4');
                     sleep(4); // Let the amplifier to warm up
                     exec('sudo systemctl start qra');
                     exec('sudo /bin/chvt 1');
@@ -107,7 +107,7 @@ class LocalizationHacklabJkl {
                     $this->notice('Hacklabin valot sammuivat!');
                     exec('sudo systemctl stop qra');
                     exec('sudo systemctl stop slayradio');
-                    exec('sispmctl -f 2 -f 3 -f 4');
+                    exec('sispmctl -f 2 -f 4');
                     $this->speak('Hei hei ja turvallista kotimatkaa!');
                     sleep(3);
                     exec('sispmctl -f 1');
