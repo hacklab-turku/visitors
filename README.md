@@ -50,13 +50,17 @@ In the same file, enable logging (a must for this to work):
 
 	log-dhcp
 
+Add access to journals:
+
+	adduser visitors systemd-journal
+
 If you want to serve public parts of the data, let's configure
 nginx. Add to nginx server block the following (adapt php-fpm socket
 path to your system):
 
 ```
 location /visitors {
-	root /PATH/TO/visitors/dist;
+	alias /PATH/TO/visitors/dist;
 	try_files $uri $uri/ @extensionless-php;
 
 	location ~ \.php$ {
