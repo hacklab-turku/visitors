@@ -2,6 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Hacklabin kävijäseurannan asetukset</title>
   <link rel="stylesheet" href="css/style.css">
   <!--[if IE]>
@@ -11,45 +12,45 @@
 </head>
 
 <body id="home">
-  
-  <h1>Hacklabin kävijäseurannan asetukset</h1>
+  <div class="container">
+    
+    <h1>Hacklab Jyväskylän kävijäseurannan hallinta</h1>
 
-  <div id="app">
-    <p id="error">{{ user.error }}</p>
+    <div id="app" class="app">
+      <p class="loading">{{ user.loading }}</p>
 
-    <template v-if="user.errorcode !== 'OUT'">
-      <table>
-	<tr>
-	  <th>MAC</th>
-	  <td>{{ user.mac | formatMac }}</td>
-	</tr>
-	<tr>
-	  <th>Koneen nimi</th>
-	  <td>{{ user.hostname }}</td>
-	</tr>
-	<tr>
-	  <th>Viimeksi muutettu</th>
-	  <td>{{ user.changed | formatDate }}</td>
-	</tr>
-	<tr>
-	  <th><label for="nick">Nimimerkki</label></th>
-	  <td>
-	    <input id="nick" type="text" v-model="user.nick">
-	    <button type="button" v-on:click="setNick(user.nick)">Vaihda</button>
-	  </td>
-	</tr>
-      </table>
-      <button type="button" v-on:click="delNick()">Lopeta tämän laitteen seuranta</button>
-    </template>
+      <template v-if="user.errorcode !== 'OUT'">
+        <div class="alert success" v-bind:class="{ showAlert: response.success }">{{ response.message }}</div>
+        <div class="alert error" v-bind:class="{ showAlert: response.error }">{{ response.message }}</div>
+        
+
+        <div class="title">MAC</div>
+        <div class="value">{{ user.mac | formatMac }}</div>
+
+        <div class="title">Koneen nimi</div>
+        <div class="value">{{ user.hostname }}</div>
+
+        <div class="title">Viimeksi muutettu</div>
+        <div class="value">{{ user.changed | formatDate }}</div>
+
+        <div class="title">
+          <label for="nick">Nimimerkki</label>
+        </div>
+        <input class="input" id="nick" type="text" v-model="user.nick">
+        
+        <div class="buttons">
+          <button class="button" type="button" v-on:click="setNick(user.nick)">Päivitä nimimerkki</button>
+          <button class="button remove" type="button" v-on:click="delNick()">Poista nimimerkki</button>
+        </div>
+        
+      </template>
+    </div>
+    <p class="info">
+      <img src="img/new.gif"><span class="blink">Sivut päivitetty!</span> Sorsat ovat
+      <a href="https://github.com/HacklabJKL/visitors/tree/master/dist">täällä</a>.
+    </p>
+
+    <script src="js/app.js"></script>  
   </div>
-  <p>
-    <img src="img/new.gif">Ärsyttääkö tämän sivun asettelu? Oletko
-    leiskapetteri? Jos vastasit näihin kysymyksiin
-    <span class="blink">kyllä</span>, lähetä pull request! Sorsat ovat
-    <a href="https://github.com/HacklabJKL/visitors/tree/master/dist">täällä</a>.
-  </p>
-
-  <script src="js/app.js"></script>  
-  
 </body>
 </html>
