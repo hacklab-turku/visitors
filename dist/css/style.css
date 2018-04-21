@@ -4,14 +4,131 @@ footer,header,hgroup,menu,nav,section{
     display:block;
 }
 
+html {
+  font-size: 20px;
+  font-family: sans-serif;
+  color: #b5b5b5;
+}
+
+h1 {
+  margin: 0;
+  font-size: 1.2rem;
+  text-align: center;
+  color: white;
+}
+
+.alert {
+  position: fixed;
+  width: 100%;
+  left: 0;
+  height: 50px;
+  color: white;
+  font-size: 40px;
+  text-align: center;
+  top: -50px;
+  transition: top 1s;
+}
+
+.showAlert {
+  top: 0px;
+}
+
+.success {
+  background-color: green;
+}
+
+.error {
+  background-color: red;
+}
+
+body {
+  background-color: #020202;
+}
+
 blink, .blink {
   animation: blink 1s step-end infinite;
+}
+
+.container {
+  background-color: #343538;
+  width: 60%;
+  min-width: 300px; 
+  max-width: 1000px; 
+  padding: 50px;
+  margin: 50px auto;
+}
+
+.title, .value, .input, .button {
+  width: 50%;
+  margin: 0 auto;
+  min-width: 280px;
+}
+
+.title, .button {
+  font-size: 0.8rem;
+  margin-bottom: 3px;
+}
+
+.value, .input, .button {
+  display: block;
+  padding: 10px;
+  margin-bottom: 10px;
+  background-color: white;
+  box-sizing: border-box;
+  border-radius: 10px;
+  border: None;
+}
+
+.value, .input {
+  font-size: 0.9rem;
+}
+
+.value {
+  color: #414141;
+  background-color: #cecece;
+}
+
+.input {
+  background-color: white;
+}
+
+.button {
+  background-color: #00bcff;
+}
+
+.buttons{
+  margin-top: 40px;
+}
+
+.button:hover{
+  background-color: #7fddff;
+}
+
+.remove {
+  background-color: #ff5252;
+}
+
+.remove:hover{
+  background-color: #ff8282;
+}
+
+.info {
+  text-align: center;
+  
 }
 
 @keyframes blink {
   67% { opacity: 0 }
 }
 
-#error {
+a:link {
+    color: white;
+}
+
+a:visited {
+    color: white;
+}
+
+.loading {
     color: red;
 }
