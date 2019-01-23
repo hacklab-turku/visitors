@@ -3,35 +3,41 @@ require_once(__DIR__.'/common.php');
 
 class LocalizationHacklabJkl {
 
-    private $irc;
+    private $ch;
     private $espeak;
 
     public function __construct() {
-        while (true) {
-            // Ensure socket rights (requires a rule in sudoers)
-            exec('sudo chown :tracker /tmp/irssiproxy.sock');
-
-            // Connect to it
-            $this->irc = stream_socket_client('unix:///tmp/irssiproxy.sock', $errno, $errstr);
-
-            if ($this->irc) break;
-
-            // Report error and try again later
-            error_log("Unable to open irssiproxy socket: $errstr ($errno)");
-            sleep(30);
-        }
-
-        fwrite($this->irc, "pass freenode\nuser\nnick\n");
-        fflush($this->irc);
+        // Configure Matrix cURL handle
+        $this->ch = curl_init();
+        curl_setopt_array($this->ch, [
+            CURLOPT_MAXREDIRS => 10,
+            CURLOPT_FOLLOWLOCATION => TRUE,
+            CURLOPT_CUSTOMREQUEST => 'PUT',
+            CURLOPT_VERBOSE => TRUE,
+            CURLOPT_HTTPHEADER => [
+                'Content-Type: application/json',
+                'Accept: application/json',
+            ],
+        ]);
 
         $this->espeak = popen("exec espeak-ng -v fi -p 60", "w");
     }
 
-    function notice($msg, $chan = '#hacklab.jkl') {
-        // FIXME msg escaping of newline, reading of return values etc.
-        fwrite($this->irc, "notice $chan :$msg\n");
-        fwrite($this->irc, "notice hacklabjkl :$msg\n");
-        fflush($this->irc);
+    function notice($msg) {
+        global $conf;
+        $url = $conf['matrix']['homeserver'] . '/_matrix/client/r0/rooms/' . urlencode($conf['matrix']['room']) . '/send/m.room.message/' . uniqid() . '?access_token=' . urlencode($conf['matrix']['token']);
+
+        $payload = [
+            'body'    => $msg,
+            'msgtype' => 'm.notice',
+        ];
+
+        curl_setopt_array($this->ch, [
+            CURLOPT_URL => $url,
+            CURLOPT_POSTFIELDS => json_encode($payload),
+        ]);
+
+        curl_exec($this->ch);
     }
 
     function speak($msg) {

@@ -7,8 +7,14 @@ require_once(__DIR__.'/lib/visitor_merge.php');
 require_once(__DIR__.'/lib/localization.php');
 
 // Create new notifier, defaulting to author's home lab.
-$notify_class = array_key_exists(1, $argv) ? $argv[1] : 'LocalizationHacklabJkl';
-$notifier = new $notify_class();
+$conffile = array_key_exists(1, $argv) ? $argv[1] : __DIR__.'/notifier.conf';
+$conf = parse_ini_file($conffile, TRUE);
+if ($conf === FALSE) {
+    print("Configuration file invalid\n");
+    exit(1);
+}
+
+$notifier = new $conf['class']();
 
 $find_leavers = $db->prepare("
 	SELECT nick,enter,leave
