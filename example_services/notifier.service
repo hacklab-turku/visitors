@@ -1,12 +1,11 @@
 [Unit]
 Description=Hacklab social media notifys
-After=ircbot.target
 
 [Service]
 Type=simple
 User=tracker
 Group=tracker
-ExecStart=/home/tracker/visitors/notifier LocalizationHacklabJkl
+ExecStart=/home/tracker/visitors/notifier
 
 [Install]
 WantedBy=multi-user.target

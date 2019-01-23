@@ -1,9 +1,0 @@
-#!/bin/sh -eu
-server='rajaniemi.freenode.net'
-channel='#hacklab.test'
-nick='YOURNICK'
-name='YOUR NAME'
-
-sleep 6 # Makes starting more probable
-echo "/j $channel" >~/ii/$server/in &
-ii -i ~/ii -s $server -n $nick -f "$name"
