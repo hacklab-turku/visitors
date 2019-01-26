@@ -95,7 +95,8 @@ while (true) {
         $delay = $follow ? max(0, $min_leave + $dhcp_lease_secs - time()) : INF;
         if ($debug) print("Waiting for data ".($delay === INF ? 'forever' : $delay.'s') ."...\n");
 
-        if (!is_data_available($pipe, $delay)) {
+        $timeout = !is_data_available($pipe, $delay);
+        if ($timeout) {
             // First possible leaver timeout reached without getting
             // new data. Time to analyze the results.
             break;
@@ -167,7 +168,8 @@ while (true) {
 
     // Analyzing if anything changed. Get next potential leave time
     // and get list of persons on board.
-    $users_result = db_execute($find_users, [$data['now'] - $dhcp_lease_secs]);
+    $current_time = $timeout ? time() : $data['now'];
+    $users_result = db_execute($find_users, [$current_time - $dhcp_lease_secs]);
     $new_state = [
         'ids' => [],
         'occupied' => $state->get()['occupied'],
