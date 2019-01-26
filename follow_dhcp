@@ -14,6 +14,24 @@ $follow = !array_key_exists('oneshot', $options) && !array_key_exists('o', $opti
 $debug = array_key_exists('debug', $options) || array_key_exists('d', $options);
 $source = @$options['s'] ?: @$options['source'] ?: 'dnsmasq';
 
+// Simulation mode with a fifo
+preg_match('/^mock-(.*)/', $source, $matches);
+if (!empty($matches)) {
+    // Rewrite source but w
+    $source = $matches[1];
+    $fifoname = tempnam("/tmp", "visitors-$source");
+    unlink($fifoname); // Never do this in production, may cause race condition
+    if (!posix_mkfifo ($fifoname, 0600)) {
+        print("Error creating FIFO\n");
+        exit(1);
+    }
+    print("Using mock fifo at $fifoname\n");
+    $pipe = fopen($fifoname, "rb");
+} else {
+    // Pipe is setup later when running in real mode (not with a mock pipe)
+    $pipe = NULL;
+}
+
 if (!in_array($source, ['dnsmasq','windows'])) {
     print("Unsupported --source option. Must be either 'dnsmasq' or 'windows'\n");
     exit(1);
@@ -56,10 +74,12 @@ $find_users = $db->prepare("
 // Data source
 $after = $cursor->get() === NULL ? '' : "'--after-cursor=".$cursor->get()."'";
 $follow_arg = $follow ? '-f' : '';
-$pipe = popen([
-    'dnsmasq' => "exec journalctl -n all -u dnsmasq -o json $after $follow_arg",
-    'windows' => "exec journalctl -n all -u windows_dhcp -o json $after $follow_arg",
-][$source], "r");
+if ($pipe === NULL) {
+    $pipe = popen([
+        'dnsmasq' => "exec journalctl -n all -u dnsmasq -o json $after $follow_arg",
+        'windows' => "exec journalctl -n all -u windows_dhcp -o json $after $follow_arg",
+    ][$source], "r");
+}
 $min_leave = time(); // First we don't know, play sure and wait whole lease time.
 if (array_key_exists('test', $options)) {
     print("Test mode, stopping\n");
