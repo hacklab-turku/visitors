@@ -61,8 +61,8 @@ function is_data_available($fd, $secs) {
 
     // Go
     $out = stream_select($fd_read, $fd_write, $fd_ex, $tv_sec, $tv_usec);
-    if ($out < 0) err("Unable to select()");
-    return $out !== 0;
+    if ($out === FALSE) err("Unable to select()");
+    return $out > 0;
 }
 
 class SqlVar {
