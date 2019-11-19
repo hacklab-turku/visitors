@@ -58,7 +58,7 @@ $update_visit = $db->prepare("
 ");
 $update_visit->bindValue('lease',$dhcp_lease_secs);
 $find_users = $db->prepare("
-	SELECT id, max(leave) AS leave
+	SELECT id, nick, max(leave) AS leave
 	FROM visit v
 	JOIN user u ON (SELECT id
 	                FROM user_mac m
@@ -171,6 +171,7 @@ while (true) {
     $users_result = db_execute($find_users, [$current_time - $dhcp_lease_secs]);
     $new_state = [
         'ids' => [],
+        'nicks' => [],
         'occupied' => $state->get()['occupied'],
     ];
 
@@ -180,6 +181,7 @@ while (true) {
         // Grab them by the first leaver time
         $min_leave = min($min_leave, $row['leave']);
         array_push($new_state['ids'], $row['id']);
+        array_push($new_state['nicks'], $row['nick']);
     }
 
     if ($state->get()['ids'] !== $new_state['ids']) {
