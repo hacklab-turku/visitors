@@ -42,7 +42,7 @@ SELECT id, enter, leave
 FROM visit v
 JOIN user u ON (SELECT id
                 FROM user_mac m
-                WHERE m.mac=v.mac AND changed<leave
+                WHERE m.mac=v.mac AND changed<leave AND COALESCE(u.flappiness<=v.renewals, 1)
                 ORDER BY changed DESC LIMIT 1
                )=u.id;
 
