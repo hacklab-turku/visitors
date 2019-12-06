@@ -8,15 +8,9 @@ require_once(__DIR__.'/common.php');
 // FIXME make it a class
 $visitors_stmt = $db->prepare("
     SELECT nick, min(enter) as enter
-    FROM visit v
-    JOIN user u ON (SELECT id
-                    FROM user_mac m
-                    WHERE m.mac=v.mac AND changed<leave AND u.flappiness<=v.renewals
-                    ORDER BY changed DESC
-                    LIMIT 1
-                   )=u.id
+    FROM public_visit
     WHERE enter<=:now AND leave>:now-:lease
-    GROUP BY u.id
+    GROUP BY id
     ORDER BY nick
 ");
 
