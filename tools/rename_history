@@ -1,0 +1,7 @@
+#!/bin/sh -eu
+
+echo -n "Renaming $2 to $3. Changed MACS: "
+sqlite3 $1 <<EOF
+update user_mac set id=(select id from user where nick='$3') where id=(select id from user where nick='$2');
+select changes();
+EOF
