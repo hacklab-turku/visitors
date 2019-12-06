@@ -1,0 +1,18 @@
+#!/bin/sh -eu
+#
+# Parses visit.csv from https://github.com/HacklabJKL/visitor_data
+
+# Skip header
+read foo
+count=0
+
+while IFS=, read id enter leave; do
+    # Rollback leave date hack in publish_to_git
+    leave=$(( $leave - 75 ))
+
+    echo $enter,+1
+    echo $leave,-1
+done | sort -n | while IFS=, read time change; do
+    count=$(( $count $change))
+    echo "INSERT INTO visitors (ts,visitors) VALUES (to_timestamp($time),$count);"
+done
