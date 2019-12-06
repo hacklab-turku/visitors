@@ -22,7 +22,8 @@ CREATE INDEX ix_visit_ip ON visit (ip, leave DESC);
 
 CREATE TABLE user(
 	id INTEGER PRIMARY KEY,
-	nick TEXT UNIQUE NOT NULL
+	nick TEXT UNIQUE NOT NULL,
+	flappiness INTEGER NOT NULL DEFAULT 0
 );
 
 CREATE INDEX ix_user_nick ON user (nick);

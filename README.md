@@ -123,6 +123,34 @@ FROM visit
 ORDER BY enter;
 ```
 
+## Flappiness
+
+Sometimes a user may just pass the premises without staying. WLAN
+coverage range might be just a little too broad and the user's mobile
+phone picks the wireless network while passing by.
+
+The table *visit* has column *renewals* which counts the number of
+DHCP renewals per visit. By default configuration a renewal happens
+approximately every 2.5 minutes (5 minute lease time divided by
+2). There is also a column *flappiness* in table *user* where
+user-specific flappiness can be defined.
+
+By default the flappiness it is zero but on problematic users you can
+try magic number of 2 or 3 which usually fixes it. The only side-effect of
+having high flappiness is the time period before user is reported to
+arrive to the premises. However, in the statistics the arrival time is
+calculated from the lease acquisition time so it doesn't break
+reports.
+
+### How to set user flappiness
+
+There is no UI support for this feature yet, but it can be done from
+the database with the following query:
+
+```sql
+UPDATE user SET flappiness=2 WHERE nick='Zouppen';
+```
+
 ## Other stuff
 
 ### Useful queries
@@ -147,11 +175,12 @@ If you want to generate map for oidentd so that connections coming
 from local network are identifiable from outside. This allows to get
 nicer IRC identities, for example.
 
-	./lab_visitors/ident_map | sudo tee /etc/oidentd_masq.conf
+	./ident_map | sudo tee /etc/oidentd_masq.conf
 	sudo service oidentd reload
 
 However, we never managed to get *oident* to detect masqueraded
-connections.
+connections. This script is just preserved for the sole purpose of
+being an example of reading data from the database.
 
 ### Cleaning the data
 

@@ -11,7 +11,7 @@ $visitors_stmt = $db->prepare("
     FROM visit v
     JOIN user u ON (SELECT id
                     FROM user_mac m
-                    WHERE m.mac=v.mac AND changed<leave
+                    WHERE m.mac=v.mac AND changed<leave AND u.flappiness<=v.renewals
                     ORDER BY changed DESC LIMIT 1
                    )=u.id
     WHERE enter<=:now AND leave>:now-:lease
