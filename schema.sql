@@ -11,7 +11,8 @@ CREATE TABLE visit(
 	enter INTEGER NOT NULL,
 	leave INTEGER NOT NULL,
 	ip TEXT NOT NULL,
-	hostname TEXT NOT NULL
+	hostname TEXT NOT NULL,
+	renewals INTEGER
 );
 
 CREATE INDEX ix_visit_mac ON visit (mac,enter);

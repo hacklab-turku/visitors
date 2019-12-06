@@ -48,12 +48,12 @@ $state = new SqlVar('visitor_state', [
 ]);
 
 $add_visit = $db->prepare("
-    INSERT INTO visit (mac, enter, leave, ip, hostname)
-    VALUES (:mac,:now,:now,:ip,:host)
+    INSERT INTO visit (mac, enter, leave, ip, hostname, renewals)
+    VALUES (:mac,:now,:now,:ip,:host,0)
 ");
 $update_visit = $db->prepare("
     UPDATE visit
-    SET leave=:now
+    SET leave=:now, renewals=renewals+1
     WHERE leave>:now-:lease AND mac=:mac
 ");
 $update_visit->bindValue('lease',$dhcp_lease_secs);
