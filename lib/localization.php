@@ -1,50 +1,21 @@
 <?php
 require_once(__DIR__.'/common.php');
+require_once(__DIR__.'/matrix.php');
 
 class LocalizationHacklabJkl {
 
-    private $ch;
+    private $matrix;
     private $espeak;
 
     public function __construct() {
-        // Configure Matrix cURL handle
-        $this->ch = curl_init();
-        curl_setopt_array($this->ch, [
-            CURLOPT_MAXREDIRS => 10,
-            CURLOPT_FOLLOWLOCATION => TRUE,
-            CURLOPT_CUSTOMREQUEST => 'PUT',
-            CURLOPT_VERBOSE => TRUE,
-            CURLOPT_HTTPHEADER => [
-                'Content-Type: application/json',
-                'Accept: application/json',
-            ],
-        ]);
-
+        global $conf;
+        $this->matrix = new Matrix($conf['matrix']['homeserver'], $conf['matrix']['token']);
         $this->espeak = popen("exec espeak-ng -v fi -p 60", "w");
     }
 
     function notice($msg, $dom = NULL) {
         global $conf;
-        $url = $conf['matrix']['homeserver'] . '/_matrix/client/r0/rooms/' . urlencode($conf['matrix']['room']) . '/send/m.room.message/' . uniqid() . '?access_token=' . urlencode($conf['matrix']['token']);
-
-        $payload = [
-            'body'    => $msg,
-            'msgtype' => 'm.notice',
-        ];
-
-        if ($dom !== NULL) {
-            $payload += [
-                'format' => 'org.matrix.custom.html',
-                'formatted_body' => $dom->saveHTML(),
-            ];
-        }
-
-        curl_setopt_array($this->ch, [
-            CURLOPT_URL => $url,
-            CURLOPT_POSTFIELDS => json_encode($payload),
-        ]);
-
-        curl_exec($this->ch);
+        $this->matrix->notice($conf['matrix']['room'], $msg, $dom);
     }
 
     function speak($msg) {
