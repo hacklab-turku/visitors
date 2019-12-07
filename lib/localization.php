@@ -23,7 +23,7 @@ class LocalizationHacklabJkl {
         $this->espeak = popen("exec espeak-ng -v fi -p 60", "w");
     }
 
-    function notice($msg) {
+    function notice($msg, $dom = NULL) {
         global $conf;
         $url = $conf['matrix']['homeserver'] . '/_matrix/client/r0/rooms/' . urlencode($conf['matrix']['room']) . '/send/m.room.message/' . uniqid() . '?access_token=' . urlencode($conf['matrix']['token']);
 
@@ -31,6 +31,13 @@ class LocalizationHacklabJkl {
             'body'    => $msg,
             'msgtype' => 'm.notice',
         ];
+
+        if ($dom !== NULL) {
+            $payload += [
+                'format' => 'org.matrix.custom.html',
+                'formatted_body' => $dom->saveHTML(),
+            ];
+        }
 
         curl_setopt_array($this->ch, [
             CURLOPT_URL => $url,
