@@ -33,7 +33,7 @@ $insert_by_uid = $db->prepare("
 	ORDER BY leave DESC
 	LIMIT 1
 ");
-$insert_by_uid->bindValue('now', time()-$dhcp_lease_secs);
+$insert_by_uid->bindValue('now', time()-$merge_window_sec);
 
 // Find user ID by nick
 $find_uid = $db->prepare("

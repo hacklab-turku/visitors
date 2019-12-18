@@ -56,7 +56,7 @@ $update_visit = $db->prepare("
     SET leave=:now, renewals=renewals+1
     WHERE leave>:now-:lease AND mac=:mac
 ");
-$update_visit->bindValue('lease',$dhcp_lease_secs);
+$update_visit->bindValue('lease',$merge_window_sec);
 $find_users = $db->prepare("
 	SELECT id, nick, max(leave) AS leave
 	FROM public_visit
@@ -86,7 +86,7 @@ while (true) {
     // Wait for fresh data at most to next leaver deadline. If running
     // in one-shot mode, wait forever.
     while (true) {
-        $delay = $follow ? max(0, $min_leave + $dhcp_lease_secs - time()) : INF;
+        $delay = $follow ? max(0, $min_leave + $merge_window_sec - time()) : INF;
         if ($debug) print("Waiting for data ".($delay === INF ? 'forever' : $delay.'s') ."...\n");
 
         $timeout = !is_data_available($pipe, $delay);
@@ -163,7 +163,7 @@ while (true) {
     // Analyzing if anything changed. Get next potential leave time
     // and get list of persons on board.
     $current_time = $timeout ? time() : $data['now'];
-    $users_result = db_execute($find_users, [$current_time - $dhcp_lease_secs]);
+    $users_result = db_execute($find_users, [$current_time - $merge_window_sec]);
     $new_state = [
         'ids' => [],
         'nicks' => [],
@@ -188,7 +188,7 @@ while (true) {
         // Try to find suitable timing source
         $new_state['ts'] = count($state->get()['ids']) < count($new_state['ids']) ?
             $data['now']: // Newcomer, use event data
-            $old_min_leave + $dhcp_lease_secs; // We lost a visitor, use estimate
+            $old_min_leave + $merge_window_sec; // We lost a visitor, use estimate
 
         $state->set($new_state);
         print($state->getRaw()."\n");

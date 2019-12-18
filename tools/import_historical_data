@@ -14,7 +14,7 @@ $update_visit = $db->prepare("
     SET leave=:now
     WHERE leave>:now-:lease AND mac=:mac
 ");
-$update_visit->bindValue('lease',$dhcp_lease_secs);
+$update_visit->bindValue('lease',$merge_window_sec);
 
 $db->exec('BEGIN');
 

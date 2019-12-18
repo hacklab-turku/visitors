@@ -127,10 +127,10 @@ class LocalizationHacklabJkl {
                 } else if ($e->button === 2 && !$e->on) {
                     $this->notice('Ydinsota syttyi. Lukekaa kaasunaamarilaukustanne löytyvät suojautumisohjeet!');
                 } else if ($e->button === 3 && $e->on) {
-                    global $dhcp_lease_secs;
+                    global $merge_window_sec;
                     // Search current visitors
                     $this->evening_start(get_visitors([
-                        'lease' => $dhcp_lease_secs,
+                        'lease' => $merge_window_sec,
                         'now' => time(),
                     ]));
                 } else if ($e->button === 3 && !$e->on) {

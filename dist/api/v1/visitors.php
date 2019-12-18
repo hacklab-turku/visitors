@@ -18,7 +18,7 @@ $req = array_key_exists('at', $_GET) ?
         'lease' => 0,
         'now' => intval($_GET['at'])
     ] : [
-        'lease' => $dhcp_lease_secs,
+        'lease' => $merge_window_sec,
         'now' => gettimeofday(true)
     ];
 $visits = get_visitors($req);

@@ -11,8 +11,9 @@ Intended to be run on a router. Listens to the journal of `dnsmasq`
 for DHCPACKs and stores the visitor database to an SQLite database.
 
 To make this work, you need to reduce DHCP server lease time. We use 5
-minutes which is currently hard-coded to variable `$dhcp_lease_secs`
-in `follow_dhcp`.
+minutes. There is variable `$merge_window_sec` in `lib/common.php`
+which should be at least the lease time but double time reduces
+flapping.
 
 The instructions are made for Debian based distributions but should
 work with any system running *systemd*.
@@ -185,10 +186,10 @@ being an example of reading data from the database.
 ### Cleaning the data
 
 If you have way too many short visits due to misconfigured
-`$dhcp_lease_secs` or want to clean up old data by merging short-term
+`$merge_window_sec` or want to clean up old data by merging short-term
 visits (within <10 minutes), there is tool `tools/cleanup_old_data`.
 
 It reads current *visit* table and imports the data into *visit\_new*
-while re-evaluating the `$dhcp_lease_secs` for all data on that table.
+while re-evaluating the `$merge_window_sec` for all data on that table.
 You should stop `follow_dhcp` while running the tool and rename
 *visit\_new* to *visit*. Don't forget to recreate the indices!
