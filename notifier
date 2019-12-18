@@ -17,7 +17,7 @@ if ($conf === FALSE) {
 $notifier = new $conf['class']();
 
 $find_leavers = $db->prepare("
-	SELECT nick,enter,leave
+	SELECT nick,enter,leave+? as leave
 	FROM public_visit
 	WHERE leave >= ?
 	ORDER BY leave DESC
@@ -84,7 +84,7 @@ while (true) {
 
         if ($e->json->ids === []) {
             // Lab is now empty
-            $leavers_result = db_execute($find_leavers, [$e->json->occupied]);
+            $leavers_result = db_execute($find_leavers, [$leave_fix_sec, $e->json->occupied]);
             $a = [];
             while (($row = $leavers_result->fetchArray(SQLITE3_ASSOC))) {
                 array_push($a, $row);

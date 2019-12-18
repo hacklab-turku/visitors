@@ -4,6 +4,7 @@ $db = new SQLite3($dbfile);
 $db->busyTimeout(2000);
 $db->exec('PRAGMA journal_mode = wal');
 $merge_window_sec = 600; // Double than real lease interval reduces flapping
+$leave_fix_sec = 75; // 1/4 of the lease time is statistically good pick
 $common_read_var = $db->prepare('SELECT value FROM state WHERE key=?');
 $common_update_var = $db->prepare('UPDATE state SET value=? WHERE key=?');
 $common_insert_var = $db->prepare('INSERT INTO state (value,key) VALUES (?,?)');
