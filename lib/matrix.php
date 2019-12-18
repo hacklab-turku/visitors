@@ -22,11 +22,15 @@ class Matrix {
     }
 
     function notice($room, $msg, $dom = NULL) {
+        $this->msg('m.notice', $room, $msg, $dom);
+    }
+
+    function msg($msgtype, $room, $msg, $dom = NULL) {
         $url = $this->hs . '/_matrix/client/r0/rooms/' . urlencode($room) . '/send/m.room.message/' . uniqid() . '?access_token=' . urlencode($this->token);
 
         $payload = [
             'body'    => $msg,
-            'msgtype' => 'm.notice',
+            'msgtype' => $msgtype,
         ];
 
         if ($dom !== NULL) {
