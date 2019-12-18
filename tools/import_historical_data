@@ -3,7 +3,6 @@
 # Import old data in column format. Import old data to empty table only!
 
 require_once(__DIR__.'/../common.php');
-$dhcp_lease_secs = 600; // 10 mins because old data is more dirty
 
 // Database
 $add_visit = $db->prepare("
