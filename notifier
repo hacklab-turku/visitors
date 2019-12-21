@@ -70,22 +70,17 @@ while (true) {
         if (time() < $last_press + 20 && $rtl_433_state === (array)$e->json) break;
 
         // Localize
-        if ($notifier->button($e->json)) {
+        if ($notifier->radio_button($e->json)) {
             // Save last state if successful
             $rtl_433_state = (array)$e->json;
             $last_press = time();
         }
         break;
     case 'hackbus.service':
-        // Skip if not containing JSON payload
+        // MODBUS controller messages.
+        // Call handler if there is any payload
         if ($e->json === NULL) break;
-
-        if ($e->json->method === "powered") {
-            if ($e->json->params === TRUE)
-                $notifier->power_on();
-            else
-                $notifier->power_off();
-        }
+        $notifier->hackbus($e->json->method, $e->json->params);
         break;
     case 'visitors.service':
         // Visitors via DHCP parsed by follow_dhcp.

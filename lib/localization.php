@@ -69,14 +69,18 @@ class LocalizationHacklabJkl {
         $this->notice($msg.$a['nick'], $dom);
     }
 
-    public function power_on() {
-        $this->notice('Hacklabilla on nyt sähköt päällä!');
-        exec('sudo systemctl start aikamerkki.timer');
-    }
-
-    public function power_off() {
-        $this->notice('Hacklabin sähköt sammuivat.');
-        exec('sudo systemctl stop aikamerkki.timer');
+    public function hackbus($event, $value) {
+        switch ($event) {
+        case 'powered':
+            if ($value) {
+                $this->notice('Hacklabilla on nyt sähköt päällä!');
+                exec('sudo systemctl start aikamerkki.timer');
+            } else {
+                $this->notice('Hacklabin sähköt sammuivat.');
+                exec('sudo systemctl stop aikamerkki.timer');
+            }
+            break;
+        }
     }
 
     public function evening_start($visits) {
@@ -98,7 +102,8 @@ class LocalizationHacklabJkl {
         }
     }
 
-    public function button($e) {
+    // Radio controlled button (433MHz)
+    public function radio_button($e) {
         switch ($e) {
         case 'rtl_error':
             $this->notice('Softaradio meni sekaisin. :-/ Voisiko joku ottaa sen koneen takana olevan USB-radion irti ja laittaa takaisin?');
