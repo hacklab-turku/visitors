@@ -1,8 +1,8 @@
 <?php
-require_once(__DIR__.'/common.php');
-require_once(__DIR__.'/matrix.php');
+require_once(__DIR__.'/../common.php');
+require_once(__DIR__.'/../matrix.php');
 
-class LocalizationHacklabJkl {
+class Localization {
 
     private $matrix;
     private $espeak;
