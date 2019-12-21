@@ -24,7 +24,7 @@ $find_leavers = $db->prepare("
 ");
 $find_user_by_id = $db->prepare("SELECT * from user WHERE id=?");
 
-$pipe = popen("exec journalctl -n0 -ojson -f -u visitors -u rtl_433", "r");
+$pipe = popen("exec journalctl -n0 -ojson -f -u visitors -u rtl_433 -u hackbus", "r");
 $last_press = 0;
 
 while (true) {
@@ -74,6 +74,17 @@ while (true) {
             // Save last state if successful
             $rtl_433_state = (array)$e->json;
             $last_press = time();
+        }
+        break;
+    case 'hackbus.service':
+        // Skip if not containing JSON payload
+        if ($e->json === NULL) break;
+
+        if ($e->json->method === "powered") {
+            if ($e->json->params === TRUE)
+                $notifier->power_on();
+            else
+                $notifier->power_off();
         }
         break;
     case 'visitors.service':

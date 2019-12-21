@@ -69,6 +69,16 @@ class LocalizationHacklabJkl {
         $this->notice($msg.$a['nick'], $dom);
     }
 
+    public function power_on() {
+        $this->notice('Hacklabilla on nyt sähköt päällä!');
+        exec('sudo systemctl start aikamerkki.timer');
+    }
+
+    public function power_off() {
+        $this->notice('Hacklabin sähköt sammuivat.');
+        exec('sudo systemctl stop aikamerkki.timer');
+    }
+
     public function evening_start($visits) {
         if (count($visits) === 0) {
             $this->speak('Tunnistaudu ennen kuin kerhoilta voi alkaa!');
