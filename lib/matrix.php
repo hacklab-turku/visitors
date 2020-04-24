@@ -14,6 +14,7 @@ class Matrix {
             CURLOPT_FOLLOWLOCATION => TRUE,
             CURLOPT_CUSTOMREQUEST => 'PUT',
             CURLOPT_VERBOSE => TRUE,
+            CURLOPT_FAILONERROR => TRUE,
             CURLOPT_HTTPHEADER => [
                 'Content-Type: application/json',
                 'Accept: application/json',
@@ -22,7 +23,7 @@ class Matrix {
     }
 
     function notice($room, $msg, $dom = NULL) {
-        $this->msg('m.notice', $room, $msg, $dom);
+        return $this->msg('m.notice', $room, $msg, $dom);
     }
 
     function msg($msgtype, $room, $msg, $dom = NULL) {
@@ -45,6 +46,6 @@ class Matrix {
             CURLOPT_POSTFIELDS => json_encode($payload),
         ]);
 
-        curl_exec($this->ch);
+        return curl_exec($this->ch);
     }
 }
