@@ -59,25 +59,29 @@ class Localization {
     }
 
     public function first_join($a) {
-        $msg = "Ensimmäisenä saapui ";
-
-        // Matrix HTML message
-        $dom = new DOMDocument('1.0', 'UTF-8');
-        $dom->appendChild($dom->createTextNode($msg));
-        $dom->appendChild($dom->createElement("strong",$a['nick']));
-
-        $this->notice($msg.$a['nick'], $dom);
+        // Not used anymore. Using lock notification via Hackbus.
     }
 
     public function hackbus($event, $value) {
         switch ($event) {
-        case 'powered':
-            if ($value) {
-                $this->notice('Hacklabilla on nyt sähköt päällä!');
+        case 'arming_state':
+            switch ($value[0]) {
+            case 'Unarmed':
+                $nick = $value[1];
+                $msg = " saapui Hacklabille.";
+
+                // Matrix HTML message
+                $dom = new DOMDocument('1.0', 'UTF-8');
+                $dom->appendChild($dom->createElement("strong", $nick));
+                $dom->appendChild($dom->createTextNode($msg));
+
+                $this->notice($nick.$msg, $dom);
                 exec('sudo systemctl start aikamerkki.timer');
-            } else {
-                $this->notice('Hacklabin sähköt sammuivat.');
+                break;
+            case 'Armed':
+                $this->notice('Hacklabilta poistuttiin.');
                 exec('sudo systemctl stop aikamerkki.timer');
+                break;
             }
             break;
         }
