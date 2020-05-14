@@ -3,7 +3,6 @@
 
 require_once(__DIR__.'/lib/common.php');
 require_once(__DIR__.'/lib/visitors.php');
-require_once(__DIR__.'/lib/visitor_merge.php');
 
 // Create new notifier, defaulting to author's home lab.
 $conffile = array_key_exists(1, $argv) ? $argv[1] : __DIR__.'/notifier.conf';
