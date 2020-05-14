@@ -14,6 +14,13 @@ $visitors_stmt = $db->prepare("
     ORDER BY nick
 ");
 
+$find_leavers_stmt = $db->prepare("
+	SELECT nick,enter,leave+? as leave
+	FROM public_visit
+	WHERE leave >= ?
+	ORDER BY leave DESC
+");
+
 // Return result set with visitors
 function get_visitors($args) {
     global $visitors_stmt;
@@ -23,6 +30,20 @@ function get_visitors($args) {
         array_push($a, $data);
     }
     return $a;
+}
+
+// Find leavers after given start time.
+function find_leavers($start_time) {
+    global $leave_fix_sec;
+
+    // Collect leavers after given time
+    $leavers_result = db_execute($find_leavers_stmt, [$leave_fix_sec, $start_time]);
+    $a = [];
+    while (($row = $leavers_result->fetchArray(SQLITE3_ASSOC))) {
+        array_push($a, $row);
+    }
+    // Merge multiple devices
+    return merge_visits($a);
 }
 
 // Group visits by person
