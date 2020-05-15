@@ -26,8 +26,17 @@ class Localization {
     }
 
     function hacklab_is_empty_msg($a) {
-        $msg = "Hacklabilta poistuttiin. Paikalla oli";
-        $msg .= count($a) > 1 ? 'vat' : '';
+        $msg = "Hacklabilta poistuttiin.";
+        switch (count($a)) {
+        case 0:
+            $this->notice($msg);
+            return;
+        case 1:
+            $msg .= ' Paikalla oli';
+            break;
+        default:
+            $msg .= ' Paikalla olivat';
+        }
 
         // Matrix HTML message
         $dom = new DOMDocument('1.0', 'UTF-8');
