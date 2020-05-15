@@ -1,6 +1,7 @@
 <?php
 require_once(__DIR__.'/../common.php');
 require_once(__DIR__.'/../matrix.php');
+require_once(__DIR__.'/../visitors.php');
 
 class Localization {
 
@@ -24,8 +25,8 @@ class Localization {
         fflush($this->espeak);
     }
 
-    public function last_leave($a) {
-        $msg = "Hacklab on nyt tyhjä. Paikalla oli";
+    function hacklab_is_empty_msg($a) {
+        $msg = "Hacklabilta poistuttiin. Paikalla oli";
         $msg .= count($a) > 1 ? 'vat' : '';
 
         // Matrix HTML message
@@ -58,6 +59,10 @@ class Localization {
         $this->notice(substr($msg, 0, -2), $dom); // Remove comma+space
     }
 
+    public function last_leave($a) {
+        // Not used anymore. Using lock notification via Hackbus.
+    }
+
     public function first_join($a) {
         // Not used anymore. Using lock notification via Hackbus.
     }
@@ -79,7 +84,7 @@ class Localization {
                 exec('sudo systemctl start aikamerkki.timer');
                 break;
             case 'Armed':
-                $this->notice('Hacklabilta poistuttiin.');
+                $this->hacklab_is_empty_msg(find_leavers($value[2]));
                 exec('sudo systemctl stop aikamerkki.timer');
                 break;
             }
