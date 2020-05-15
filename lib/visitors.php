@@ -34,7 +34,7 @@ function get_visitors($args) {
 
 // Find leavers after given start time.
 function find_leavers($start_time) {
-    global $leave_fix_sec;
+    global $leave_fix_sec, $find_leavers_stmt;
 
     // Collect leavers after given time
     $leavers_result = db_execute($find_leavers_stmt, [$leave_fix_sec, $start_time]);
