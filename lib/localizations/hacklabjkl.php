@@ -78,9 +78,11 @@ class Localization {
 
     public function hackbus($event, $value) {
         switch ($event) {
-        case 'arming_state':
-            switch ($value[0]) {
-            case 'Unarmed':
+        case 'visitor_info':
+            if ($value[0]) { // If armed
+                $this->hacklab_is_empty_msg(find_leavers($value[2]));
+                exec('sudo systemctl stop aikamerkki.timer');
+            } else { // If unarmed
                 $nick = $value[1];
                 $msg = " saapui Hacklabille.";
 
@@ -91,11 +93,6 @@ class Localization {
 
                 $this->notice($nick.$msg, $dom);
                 exec('sudo systemctl start aikamerkki.timer');
-                break;
-            case 'Armed':
-                $this->hacklab_is_empty_msg(find_leavers($value[2]));
-                exec('sudo systemctl stop aikamerkki.timer');
-                break;
             }
             break;
         }
