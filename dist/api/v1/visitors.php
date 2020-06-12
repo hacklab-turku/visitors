@@ -26,7 +26,7 @@ $visits = get_visitors($req);
 // Allow CORS
 header('Access-Control-Allow-Origin: *');
 
-switch (@$_GET['format'] ?: 'text') {
+switch (@$_GET['format'] ?: @$argv[1] ?: 'text') {
 case 'widget':
     // People are reloading it anyway so let's serve them a playing
     // card :-)
