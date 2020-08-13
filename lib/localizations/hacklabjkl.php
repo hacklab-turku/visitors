@@ -81,7 +81,7 @@ class Localization {
         case 'visitor_info':
             if ($value[0]) { // If armed
                 $this->hacklab_is_empty_msg(find_leavers($value[2]));
-                exec('sudo systemctl stop aikamerkki.timer');
+                exec('sudo systemctl stop paikalla.target');
             } else { // If unarmed
                 $nick = $value[1];
                 $msg = " saapui Hacklabille.";
@@ -92,7 +92,7 @@ class Localization {
                 $dom->appendChild($dom->createTextNode($msg));
 
                 $this->notice($nick.$msg, $dom);
-                exec('sudo systemctl start aikamerkki.timer');
+                exec('sudo systemctl start paikalla.target');
             }
             break;
         }
