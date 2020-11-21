@@ -117,67 +117,8 @@ class Localization {
         }
     }
 
-    // Radio controlled button (433MHz)
+    // Radio controlled button (433MHz) not used any more
     public function radio_button($e) {
-        switch ($e) {
-        case 'rtl_error':
-            $this->notice('Softaradio meni sekaisin. :-/ Voisiko joku ottaa sen koneen takana olevan USB-radion irti ja laittaa takaisin?');
-            return true;
-        case 'rtl_ok':
-            $this->notice('Kiitos, softaradio toimii taas. <3');
-            return true;
-        default:
-            switch ($e->model) {
-            case 'Generic Remote':
-                // Skip if not our remote and if button is released.
-                if ($e->released || $e->chan !== 0) break;
-
-                // Now parsing the events for buttons
-                if ($e->button === 0 && $e->on) {
-                    $this->notice('Hacklabin valot syttyivät!');
-                    exec('sispmctl -o 1 -o 2 -o 4');
-                    sleep(4); // Let the amplifier to warm up
-                    exec('sudo systemctl start qra');
-                    exec('sudo /bin/chvt 1');
-                } else if ($e->button === 0 && !$e->on) {
-                    $this->notice('Hacklabin valot sammuivat!');
-                    exec('sudo systemctl stop qra');
-                    exec('sudo systemctl stop slayradio');
-                    exec('sispmctl -f 2 -f 4');
-                    $this->speak('Hei hei ja turvallista kotimatkaa!');
-                    sleep(3);
-                    exec('sispmctl -f 1');
-                    exec('ssh shutdown-alarmpi');
-                } else if ($e->button === 1 && $e->on) {
-                    exec('sudo systemctl start slayradio');
-                } else if ($e->button === 1 && !$e->on) {
-                    exec('sudo systemctl stop slayradio');
-                } else if ($e->button === 2 && $e->on) {
-                    $this->notice('Nyt on eeppistä settiä! :-O');
-                } else if ($e->button === 2 && !$e->on) {
-                    $this->notice('Ydinsota syttyi. Lukekaa kaasunaamarilaukustanne löytyvät suojautumisohjeet!');
-                } else if ($e->button === 3 && $e->on) {
-                    global $merge_window_sec;
-                    // Search current visitors
-                    $this->evening_start(get_visitors([
-                        'lease' => $merge_window_sec,
-                        'now' => time(),
-                    ]));
-                } else if ($e->button === 3 && !$e->on) {
-                    $this->notice('Labilta ollaan tekemässä lähtöä...');
-                    $this->speak('Muistakaa siivota ennen lähtöä!');
-                } else {
-                    return false;
-                }
-                return true;
-            case 'Generic temperature sensor 1':
-                if ($e->id === 0 && $e->temperature_C == 0.000) {
-                    $this->notice('Ding! Dong!');
-                    return true;
-                }
-                return false;
-            }
-            return false;
-        }
+        return false;
     }
 }
