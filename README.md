@@ -64,6 +64,8 @@ location /visitors {
 	alias /PATH/TO/visitors/dist;
 	try_files $uri $uri/ @extensionless-php;
 
+    rewrite ^/visitors/api/v1/hackbus/(.*) /visitors/api/v1/hackbus?read=$1;
+
 	location ~ \.php$ {
 		include snippets/fastcgi-php.conf;
 		fastcgi_pass unix:/run/php/php7.0-fpm.sock;
