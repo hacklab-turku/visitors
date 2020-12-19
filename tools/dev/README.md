@@ -13,3 +13,5 @@ used. The syntax for configuration is described in the
 [example](../../notifier.conf.example).
 
 Example: `./trigger_last_leave -v visitors_test1.json`
+
+Help wanted! Construct more JSON files for testing some corner cases.
