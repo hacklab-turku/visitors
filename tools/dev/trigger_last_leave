@@ -1,0 +1,44 @@
+#!/usr/bin/env php
+<?php
+
+//Run with --visitors or -v with JSON file containing the visitor data
+
+require_once(__DIR__.'/../../lib/common.php');
+require_once(__DIR__.'/../../lib/visitors.php');
+
+$options = getopt('v:c:', [
+    'visitors:',
+    'config:',
+]);
+
+$json_file = @$options['v'] ?: @$options['visitors'];
+
+if ($json_file === NULL) {
+    print("Usage: ${argv[0]} [-c NOTIFIER_CONF] -v VISITORS_JSON\n");
+    exit(1);
+}
+
+$json = file_get_contents($json_file);
+if ($json === FALSE) {
+    print("Unable to read $json_file\n");
+    exit(2);
+}
+
+$obj = json_decode($json, TRUE);
+if ($obj === NULL) {
+    print("JSON format error\n");
+    exit(3);
+}
+
+// Create new notifier.
+$conffile = @$options['c'] ?: @$options['config'] ?: __DIR__.'/../../notifier.conf';
+$conf = parse_ini_file($conffile, TRUE);
+if ($conf === FALSE) {
+    print("Configuration file invalid\n");
+    exit(1);
+}
+
+// The actual query after all the boilerplate
+require_once(__DIR__.'/../../lib/localizations/'.$conf['localization'].'.php');
+$notifier = new Localization();
+$notifier->last_leave($obj);
