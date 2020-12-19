@@ -10,6 +10,6 @@ Usage: `./trigger_last_leave [-c NOTIFIER.CONF] -v VISITOR_JSON`
 
 If you omit `-c`, then default configuration in project root is
 used. The syntax for configuration is described in the
-[example](notifier.conf.example).
+[example](../../notifier.conf.example).
 
 Example: `./trigger_last_leave -v visitors_test1.json`
