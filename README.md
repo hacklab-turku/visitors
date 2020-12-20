@@ -3,9 +3,7 @@
 # Visitor logger
 
 Logs visitors in a given network. Can be used to log visits of both
-wired and wireless ethernet devices. Useful for person tracking. We
-use it for collecting visitor statistics in
-[our hackerspace](http://jkl.hacklab.fi) in Jyväskylä, Finland.
+wired and wireless ethernet devices. Useful for person tracking and lab utilization tracking.
 
 Intended to be run on a router. Listens to the journal of `dnsmasq`
 for DHCPACKs and stores the visitor database to an SQLite database.
