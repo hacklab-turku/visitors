@@ -17,98 +17,41 @@ class Localization {
         $this->matrix->notice($conf['matrix']['room'], $msg, $dom);
     }
 
-    //function speak($msg) {
-        // FIXME Escape SSML sequences
-   //     fwrite($this->espeak, "$msg\n");
-   //     fflush($this->espeak);
-   // }
-
-    function hacklab_is_empty_msg($a) {
-        $msg = "Hacklabilta poistuttiin.";
-        switch (count($a)) {
-        case 0:
-            $this->notice($msg);
-            return;
-        case 1:
-            $msg .= ' Paikalla oli';
-            break;
-        default:
-            $msg .= ' Paikalla olivat';
-        }
-
-        // Matrix HTML message
-        $dom = new DOMDocument('1.0', 'UTF-8');
-        $dom->appendChild($dom->createTextNode($msg.":"));
-        $table = $dom->createElement("ul");
-        $msg .= " ";
-
-        foreach ($a as $user => $visits) {
-            $row = $dom->createElement("li");
-            $row->appendChild($dom->createElement("strong",$user));
-
-            $msg .= "$user (";
-            $range = "";
-            foreach($visits as $visit) {
-                $range .=
-                    date('H:i', $visit['enter']).
-                    '–'.
-                    date('H:i', $visit['leave']).
-                    ', ';
-            }
-            // Add closing brace before comma+space the hard way
-            $range = substr($range, 0, -2);
-
-            $msg .= $range . '), ';
-            $row->appendChild($dom->createTextNode(" ".$range));
-            $table->appendChild($row);
-        }
-        $dom->appendChild($table);
-        $this->notice(substr($msg, 0, -2), $dom); // Remove comma+space
-    }
-
     public function last_leave($a) {
-        $msg = "Hacklab on nyt tyhjä. Paikalla oli";
-        $msg .= count($a) > 1 ? 'vat' : '';
+            $msg = "Hacklab is not occupied anymore. There ";
+            $msg .= count($a) > 1 ? 'were ' : 'was ';
+            $msg .= count($a);
+            $msg .= ' ';
+            $msg .= count($a) > 1 ? 'users.' : 'user.';
+            $msg .= ' ';
+            $msg .= count($a) > 1 ? ' Time spent labbing across all users ' : ' Time spent labbing ';
 
-        // Matrix HTML message
-        $dom = new DOMDocument('1.0', 'UTF-8');
-        $dom->appendChild($dom->createTextNode($msg.":"));
-        $table = $dom->createElement("ul");
-        $msg .= " ";
-
-        foreach ($a as $user => $visits) {
-            $row = $dom->createElement("li");
-            $row->appendChild($dom->createElement("strong",$user));
-
-            $msg .= "$user (";
-            $range = "";
-            foreach($visits as $visit) {
-                $range .=
-                    date('H:i', $visit['enter']).
-                    '–'.
-                    date('H:i', $visit['leave']).
-                    ', ';
+            $visitors = 0;
+            $seconds = 0;
+            foreach($a as $user => $visits) {
+                $visitors++;
+                foreach($visits as $visit) {
+                    $seconds += $visit['leave'] - $visit['enter'];
+                }
             }
-            // Add closing brace before comma+space the hard way
-            $range = substr($range, 0, -2);
 
-            $msg .= $range . '), ';
-            $row->appendChild($dom->createTextNode(" ".$range));
-            $table->appendChild($row);
-        }
-        $dom->appendChild($table);
-        $this->notice(substr($msg, 0, -2), $dom); // Remove comma+space
+            // TODO: Figure out a good way to calculate times over 24h.
+            $calculated = strftime('%H hours and %M minutes', $seconds);
+            $msg .= $calculated;
+
+            $dom = new DOMDocument('1.0', 'UTF-8');
+            $dom->appendChild($dom->createTextNode($msg));
+            $this->notice($msg, $dom);
     }
 
     public function first_join($a) {
-        $msg = "Ensimmäisenä saapui ";
+        $msg = "The first lab user has arrived. ";
 
         // Matrix HTML message
         $dom = new DOMDocument('1.0', 'UTF-8');
         $dom->appendChild($dom->createTextNode($msg));
-        $dom->appendChild($dom->createElement("strong",$a['nick']));
 
-        $this->notice($msg.$a['nick'], $dom);
+        $this->notice($msg, $dom);
     }
 
     public function hackbus($event, $value) {
