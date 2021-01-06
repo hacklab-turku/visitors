@@ -35,9 +35,14 @@ class Localization {
                 }
             }
 
-            // TODO: Figure out a good way to calculate times over 24h.
-            $calculated = strftime('%H hours and %M minutes', $seconds);
-            $msg .= $calculated;
+            $hours = floor($seconds/3600);
+            $minutes = floor(($seconds/60)%60);
+
+            if ($hours == 0) {
+                $msg .= $minutes .' minutes.';
+            }else {
+                $msg .= $hours .' hours and ' . $minutes . '.';
+            }
 
             $dom = new DOMDocument('1.0', 'UTF-8');
             $dom->appendChild($dom->createTextNode($msg));
