@@ -41,7 +41,7 @@ class Localization {
             if ($hours == 0) {
                 $msg .= $minutes .' minutes.';
             }else {
-                $msg .= $hours .' hours and ' . $minutes . '.';
+                $msg .= $hours .' hours and ' . $minutes . ' minutes.';
             }
 
             $dom = new DOMDocument('1.0', 'UTF-8');
