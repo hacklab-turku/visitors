@@ -49,6 +49,14 @@ class Localization {
             $this->notice($msg, $dom);
     }
 
+
+    public function test_message() {
+           $msg = "This is a manually invoked test message.";
+           $dom = new DOMDocument('1.0', 'UTF-8');
+           $dom->appendChild($dom->createTextNode($msg));
+           $this->notice($msg, $dom);
+    }
+
     public function first_join($a) {
         $msg = "The first lab user has arrived. ";
 
