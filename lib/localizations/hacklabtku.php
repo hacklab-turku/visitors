@@ -74,6 +74,15 @@ class Localization {
         $this->notice($msg, $dom);
     }
 
+    public function first_join_light() {
+        $msg = "First lab user has arrived. This was determined by light sensor.";
+
+        $dom = new DOMDocument('1.0', 'UTF-8');
+        $dom->appendChild($dom->createTextNode($msg));
+
+        $this->notice($msg, $dom);
+    }
+
     public function hackbus($event, $value) {
         // empty
     }
