@@ -86,10 +86,10 @@ while (true) {
             // Skip if not containing JSON payload
             if ($e->json === NULL) break;
 
-            if ($e->json->ids === []) {
+            //if ($e->json->ids === []) {
                 // Lab is now empty
-                $notifier->last_leave(find_leavers($e->json->occupied));
-            }
+            //    $notifier->last_leave(find_leavers($e->json->occupied));
+            //}
 
             if ($e->json->occupied === $e->json->ts) {
                 // Lab got first visitor
@@ -102,7 +102,9 @@ while (true) {
             if ($e->json === NULL) break;
 
             if ($e->json === 1) {
-                print("Light is on.");
+                $notifier->first_join_light();
+            }else {
+                $notifier->last_leave(find_leavers($e->json->occupied));
             }
 
     }  
