@@ -18,7 +18,7 @@ $notifier = new Localization();
 
 $find_user_by_id = $db->prepare("SELECT * from user WHERE id=?");
 
-$pipe = popen("exec journalctl -n0 -ojson -f -u visitors -u rtl_433 -u hackbus", "r");
+$pipe = popen("exec journalctl -n0 -ojson -f -u visitors -u rtl_433 -u hackbus -u light_watcher", "r");
 $last_press = 0;
 
 while (true) {
@@ -37,61 +37,73 @@ while (true) {
     $e->json = json_decode($e->MESSAGE);
     
     switch ($e->_SYSTEMD_UNIT) {
-    case 'rtl_433.service':
-        // Radio controlled buttons parsed by rtl_433
 
-        // Remove timestamps to identify duplicates
-        if ($e->json !== NULL) $e->json->time = NULL;
-        // Name some common RTL error cases
-        if (strpos($e->MESSAGE, 'rtlsdr_demod_write_reg failed') === 0) {
-            $e->json = "rtl_error";
-        } else if (strpos($e->MESSAGE, 'Using device ') === 0) {
-            $e->json = "rtl_ok";
-        } else if ($e->json === NULL) {
-            // Ignore garbage
-            break;
-        } else {
-            if ($e->json->model === 'Generic Remote') {
-                $e->json->released = $e->json->tristate[11] === '1';
-                $e->json->chan = strpos($e->json->tristate, '0');
-                $e->json->button = strpos($e->json->tristate, '0', 4)-4;
-                $e->json->on = $e->json->tristate[11] === 'F';
-                $e->json->tristate = NULL; // Not needed anymore
+        case 'rtl_433.service':
+            // Radio controlled buttons parsed by rtl_433
+
+            // Remove timestamps to identify duplicates
+            if ($e->json !== NULL) $e->json->time = NULL;
+
+            // Name some common RTL error cases
+            if (strpos($e->MESSAGE, 'rtlsdr_demod_write_reg failed') === 0) {
+                $e->json = "rtl_error";
+            } else if (strpos($e->MESSAGE, 'Using device ') === 0) {
+                $e->json = "rtl_ok";
+            } else if ($e->json === NULL) {
+                // Ignore garbage
+                break;
+            } else {
+                if ($e->json->model === 'Generic Remote') {
+                    $e->json->released = $e->json->tristate[11] === '1';
+                    $e->json->chan = strpos($e->json->tristate, '0');
+                    $e->json->button = strpos($e->json->tristate, '0', 4)-4;
+                    $e->json->on = $e->json->tristate[11] === 'F';
+                    $e->json->tristate = NULL; // Not needed anymore
+                }
             }
-        }
 
-        // If the same state comes soon enough
-        if (time() < $last_press + 20 && $rtl_433_state === (array)$e->json) break;
+            // If the same state comes soon enough
+            if (time() < $last_press + 20 && $rtl_433_state === (array)$e->json) break;
 
-        // Localize
-        if ($notifier->radio_button($e->json)) {
-            // Save last state if successful
-            $rtl_433_state = (array)$e->json;
-            $last_press = time();
-        }
+            // Localize
+            if ($notifier->radio_button($e->json)) {
+                // Save last state if successful
+                $rtl_433_state = (array)$e->json;
+                $last_press = time();
+            }
         break;
-    case 'hackbus.service':
-        // MODBUS controller messages.
-        // Call handler if there is any payload
-        if ($e->json === NULL) break;
-        $notifier->hackbus($e->json->method, $e->json->params);
-        break;
-    case 'visitors.service':
-        // Visitors via DHCP parsed by follow_dhcp.
-        
-        // Skip if not containing JSON payload
-        if ($e->json === NULL) break;
 
-        if ($e->json->ids === []) {
-            // Lab is now empty
-            $notifier->last_leave(find_leavers($e->json->occupied));
-        }
+        case 'hackbus.service':
+            // MODBUS controller messages.
+            // Call handler if there is any payload
+            if ($e->json === NULL) break;
 
-        if ($e->json->occupied === $e->json->ts) {
-            // Lab got first visitor
-            $user = db_execute($find_user_by_id, [$e->json->ids[0]])->fetchArray(SQLITE3_ASSOC);
-            $notifier->first_join($user);
-        }
+            $notifier->hackbus($e->json->method, $e->json->params);
+            break;
+
+        case 'visitors.service':
+            // Visitors via DHCP parsed by follow_dhcp.
+            // Skip if not containing JSON payload
+            if ($e->json === NULL) break;
+
+            if ($e->json->ids === []) {
+                // Lab is now empty
+                $notifier->last_leave(find_leavers($e->json->occupied));
+            }
+
+            if ($e->json->occupied === $e->json->ts) {
+                // Lab got first visitor
+                $user = db_execute($find_user_by_id, [$e->json->ids[0]])->fetchArray(SQLITE3_ASSOC);
+                $notifier->first_join($user);
+            }
         break;
+
+        case 'light_watcher.service':
+            if ($e->json === NULL) break;
+
+            if ($e->json === 1) {
+                print("Light is on.");
+            }
+
     }  
 }
