@@ -107,5 +107,6 @@ while (true) {
                 $notifier->last_leave(find_leavers($e->json->occupied));
             }
 
+            break;
     }  
 }
