@@ -1,0 +1,11 @@
+[Unit]
+Description=Hacklab light watcher
+
+[Service]
+Type=simple
+User=tracker
+Group=tracker
+ExecStart=/home/tracker/visitors/light_sensor_watcher.py
+
+[Install]
+WantedBy=multi-user.target
